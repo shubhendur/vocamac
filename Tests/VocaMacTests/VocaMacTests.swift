@@ -264,7 +264,7 @@ final class ActivationModeTests: XCTestCase {
         }
     }
 
-    func testCaseCount() {
+    func testActivationModeCaseCount() {
         XCTAssertEqual(ActivationMode.allCases.count, 2)
     }
 
@@ -292,7 +292,7 @@ final class KeyCodeReferenceTests: XCTestCase {
 
     func testCommonHotKeysValid() {
         for hotkey in KeyCodeReference.commonHotKeys {
-            XCTAssertGreaterThanOrEqual(hotkey.code, 0)
+            XCTAssertGreaterThanOrEqual(hotkey.keyCode, 0)
             XCTAssertFalse(hotkey.name.isEmpty)
         }
     }
