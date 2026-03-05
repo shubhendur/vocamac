@@ -167,10 +167,12 @@ ci: add GitHub Actions build workflow
 ```
 
 ### Pull Requests
+- **NEVER commit directly to main** — always create a feature branch and raise a PR
 - One logical change per PR — don't bundle unrelated changes
 - Write descriptive PR titles and bodies
 - PRs must pass CI (`swift build` + `swift test`) before merge
 - Squash merge preferred for clean history
+- Wait for the user to review and merge — do not merge PRs yourself
 
 ---
 
