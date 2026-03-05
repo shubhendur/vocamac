@@ -201,9 +201,9 @@ h4 { font-size: 16px; font-weight: 600; }
     font-weight: 600;
 }
 .navbar__icon { font-size: 22px; }
-.navbar__logo-img { width: 28px; height: 28px; border-radius: 6px; }
-.footer__logo-img { width: 22px; height: 22px; border-radius: 5px; }
-.mockup__app-logo { width: 32px; height: 32px; border-radius: 7px; }
+.navbar__logo-img { width: auto; height: 24px; }
+.footer__logo-img { width: auto; height: 20px; }
+.mockup__app-logo { width: auto; height: 28px; }
 .navbar__menu {
     display: flex;
     gap: 36px;
@@ -584,7 +584,7 @@ section { padding: 100px 0; }
 }
 .family-card.visible { opacity: 1; transform: translateY(0); }
 .family-card:hover { border-color: var(--border-hover); background: var(--card-hover-bg); }
-.family-card__icon { font-size: 36px; }
+.family-card__icon { font-size: 36px; display: flex; align-items: center; justify-content: center; min-height: 44px; }
 .family-card__name { font-size: 20px; font-weight: 700; }
 .family-card p { color: var(--text-secondary); font-size: 14px; }
 .family-card__link { color: var(--accent); font-size: 13px; font-weight: 500; margin-top: 4px; }

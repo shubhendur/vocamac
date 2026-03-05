@@ -1,24 +1,13 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
-  <defs>
-    <linearGradient id="accent" x1="0.5" y1="0" x2="0.5" y2="1">
-      <stop offset="0%" stop-color="#64B5F6"/>
-      <stop offset="100%" stop-color="#2196F3"/>
-    </linearGradient>
-  </defs>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 56" fill="none">
+  <!-- Apple SF Symbol "mic.fill" replica — #007AFF system blue -->
 
-  <!-- Circle outline -->
-  <circle cx="256" cy="256" r="140" fill="none" stroke="url(#accent)" stroke-width="10" opacity="0.25"/>
+  <!-- Microphone capsule (tall pill, filled) -->
+  <rect x="10" y="2" width="20" height="34" rx="10" fill="#007AFF"/>
 
-  <!-- Microphone capsule -->
-  <rect x="228" y="168" width="56" height="100" rx="28" fill="url(#accent)"/>
+  <!-- Cradle arc (wide U-shape, hugs bottom of capsule) -->
+  <path d="M4 22C4 34.15 12.06 44 20 44C27.94 44 36 34.15 36 22"
+        fill="none" stroke="#007AFF" stroke-width="3.5" stroke-linecap="round"/>
 
-  <!-- Mic cradle -->
-  <path d="M206 260C206 290 228 312 256 312C284 312 306 290 306 260"
-        fill="none" stroke="url(#accent)" stroke-width="10" stroke-linecap="round"/>
-
-  <!-- Stem -->
-  <line x1="256" y1="312" x2="256" y2="340" stroke="url(#accent)" stroke-width="10" stroke-linecap="round"/>
-
-  <!-- Base -->
-  <line x1="234" y1="340" x2="278" y2="340" stroke="url(#accent)" stroke-width="10" stroke-linecap="round"/>
+  <!-- Stem (short, from bottom of cradle) -->
+  <line x1="20" y1="44" x2="20" y2="54" stroke="#007AFF" stroke-width="3.5" stroke-linecap="round"/>
 </svg>
