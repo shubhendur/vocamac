@@ -55,6 +55,14 @@ VocaMac is a native macOS menu bar application that transcribes your voice to te
 </p>
 
 <p align="center">
+  <img src="docs/screenshots/settings-audio.png" alt="Settings - Audio" width="400">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/settings-about.png" alt="Settings - About" width="400">
+  <br>
+  <em>Settings: Audio tab (left) and About tab (right)</em>
+</p>
+
+<p align="center">
   <img src="docs/screenshots/cursor-indicator.png" alt="Cursor Indicator" width="400">
   <br>
   <em>Floating mic indicator near text cursor during recording</em>
