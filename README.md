@@ -24,9 +24,9 @@
 
 </div>
 
-**Opensource Private Local voice-to-text transcription app for macOS - powered by [WhisperKit](https://github.com/argmaxinc/WhisperKit)**
+**Your voice, your Mac, your privacy. Open-source dictation powered by AI.**
 
-VocaMac is a native macOS menu bar application that transcribes your voice to text locally on your machine. No cloud, no subscriptions, no data leaves your device. Just hold a hotkey, speak, and your words appear wherever your cursor is.
+Speak. It types. 100% offline, open-source voice-to-text for macOS - powered by [WhisperKit](https://github.com/argmaxinc/WhisperKit). No cloud, no subscriptions, no data leaves your device. Just hold a hotkey, speak, and your words appear wherever your cursor is.
 
 ---
 
