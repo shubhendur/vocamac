@@ -78,6 +78,12 @@ final class WhisperService: @unchecked Sendable {
             // Verbose logging for debugging
             config.verbose = true
 
+            // Prewarm the model so the CoreML pipeline (Metal/ANE) is compiled
+            // at load time rather than on the first transcription request.
+            // Without this, the first transcription after switching models is
+            // extremely slow as CoreML compiles shaders and optimizes the graph.
+            config.prewarm = true
+
             // If a local model folder is specified, use it
             if let folder = modelFolder {
                 config.modelFolder = folder.path

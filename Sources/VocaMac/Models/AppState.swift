@@ -331,16 +331,26 @@ final class AppState: ObservableObject {
         do {
             try await modelManager.downloadModel(size: size) { [weak self] progress in
                 Task { @MainActor in
-                    if let idx = self?.availableModels.firstIndex(where: { $0.size == size }) {
-                        self?.availableModels[idx].downloadProgress = progress
+                    guard let self = self else { return }
+                    if let idx = self.availableModels.firstIndex(where: { $0.size == size }) {
+                        // Only update progress if we haven't already completed (1.0)
+                        // This prevents race conditions with the simulated progress task
+                        if progress >= 1.0 || self.availableModels[idx].downloadProgress != nil {
+                            self.availableModels[idx].downloadProgress = progress
+                        }
                     }
                 }
             }
 
+            // Small delay to let the final progress (1.0) callback settle on MainActor
+            try? await Task.sleep(nanoseconds: 100_000_000)  // 100ms
+
             // Refresh all model statuses to ensure previously downloaded models are preserved
             refreshModelStatuses()
         } catch {
-            availableModels[index].downloadProgress = nil
+            if let idx = availableModels.firstIndex(where: { $0.size == size }) {
+                availableModels[idx].downloadProgress = nil
+            }
             errorMessage = "Download failed: \(error.localizedDescription)"
         }
     }
