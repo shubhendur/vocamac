@@ -265,6 +265,7 @@ struct MenuBarView: View {
                 Text("Required to capture your voice for transcription.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             if appState.accessibilityPermission != .granted {
@@ -280,6 +281,7 @@ struct MenuBarView: View {
                 Text("Required for global hotkeys and text injection. Opens System Settings.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
 
             if appState.inputMonitoringPermission != .granted {
@@ -295,6 +297,7 @@ struct MenuBarView: View {
                 Text("Required to detect hotkey presses system-wide. Enable VocaMac in the list.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
