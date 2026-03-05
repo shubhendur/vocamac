@@ -7,7 +7,7 @@
 [![Build & Test](https://github.com/jatinkrmalik/vocamac/actions/workflows/ci.yml/badge.svg)](https://github.com/jatinkrmalik/vocamac/actions/workflows/ci.yml) [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0) [![Platform: macOS](https://img.shields.io/badge/Platform-macOS%2013%2B-lightgrey.svg)](https://github.com/jatinkrmalik/vocamac) [![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org) [![Website](https://img.shields.io/badge/Web-vocamac.com-blue.svg)](https://vocamac.com)Website](https://img.shields.io/badge/Web-vocamac.com-007AFF.svg)](https://vocamac.com) [![GitHub stars](https://img.shields.io/github/stars/jatinkrmalik/vocamac?style=social)](https://github.com/jatinkrmalik/vocamac/stargazers)
 
 
-**Local voice-to-text for macOS — powered by [WhisperKit](https://github.com/argmaxinc/WhisperKit)**
+**Local voice-to-text for macOS  -  powered by [WhisperKit](https://github.com/argmaxinc/WhisperKit)**
 
 VocaMac is a native macOS menu bar application that transcribes your voice to text locally on your machine. No cloud, no subscriptions, no data leaves your device. Just hold a hotkey, speak, and your words appear wherever your cursor is.
 
@@ -17,14 +17,14 @@ VocaMac is a native macOS menu bar application that transcribes your voice to te
 
 ## ✨ Features
 
-- **🔒 100% Local** — All audio processing happens on your machine. No internet required (except for one-time model downloads).
-- **⌨️ System-Wide Text Injection** — Transcribed text is typed wherever your cursor is: browsers, Slack, VS Code, spreadsheets, terminals — everywhere.
-- **🎯 Push-to-Talk** — Hold a hotkey (default: Right Option) to record. Release to transcribe.
-- **👆 Double-Tap Toggle** — Double-tap the hotkey to start/stop recording.
-- **🧠 Smart Model Selection** — Auto-detects your hardware (Apple Silicon/Intel, RAM) and recommends the best whisper model via WhisperKit.
-- **⚡ Native Apple Acceleration** — CoreML + Metal + Neural Engine acceleration on Apple Silicon. No manual setup.
-- **📊 Visual Feedback** — Menu bar icon changes color during recording and processing. Audio level indicator shows input.
-- **⚙️ Configurable** — Choose hotkeys, models, languages, silence detection thresholds, and more.
+- **🔒 100% Local**  -  All audio processing happens on your machine. No internet required (except for one-time model downloads).
+- **⌨️ System-Wide Text Injection**  -  Transcribed text is typed wherever your cursor is: browsers, Slack, VS Code, spreadsheets, terminals  -  everywhere.
+- **🎯 Push-to-Talk**  -  Hold a hotkey (default: Right Option) to record. Release to transcribe.
+- **👆 Double-Tap Toggle**  -  Double-tap the hotkey to start/stop recording.
+- **🧠 Smart Model Selection**  -  Auto-detects your hardware (Apple Silicon/Intel, RAM) and recommends the best whisper model via WhisperKit.
+- **⚡ Native Apple Acceleration**  -  CoreML + Metal + Neural Engine acceleration on Apple Silicon. No manual setup.
+- **📊 Visual Feedback**  -  Menu bar icon changes color during recording and processing. Audio level indicator shows input.
+- **⚙️ Configurable**  -  Choose hotkeys, models, languages, silence detection thresholds, and more.
 
 ---
 
@@ -50,8 +50,8 @@ Same accuracy, dramatically better Apple platform integration.
 
 - **macOS 13 (Ventura)** or later
 - **Xcode 15+** or Swift 5.9+ (for building)
-- **Microphone permission** — For audio capture
-- **Accessibility permission** — For global hotkeys and text injection
+- **Microphone permission**  -  For audio capture
+- **Accessibility permission**  -  For global hotkeys and text injection
 
 ---
 
@@ -64,7 +64,7 @@ Same accuracy, dramatically better Apple platform integration.
 git clone https://github.com/jatinkrmalik/vocamac.git
 cd vocamac
 
-# Build (first build downloads WhisperKit dependency — ~1 min)
+# Build (first build downloads WhisperKit dependency  -  ~1 min)
 swift build -c release
 
 # Run VocaMac
@@ -75,9 +75,9 @@ swift run -c release VocaMac
 
 1. **VocaMac appears in your menu bar** (microphone icon, no Dock icon)
 2. **Grant Microphone permission** when prompted
-3. **Grant Accessibility permission** — VocaMac will guide you to System Settings → Privacy & Security → Accessibility
-4. **First model download** — WhisperKit automatically downloads the recommended model for your device (~40-500MB depending on hardware)
-5. **Start dictating** — Hold the **Right Option** key, speak, and release. Your words appear at the cursor!
+3. **Grant Accessibility permission**  -  VocaMac will guide you to System Settings → Privacy & Security → Accessibility
+4. **First model download**  -  WhisperKit automatically downloads the recommended model for your device (~40-500MB depending on hardware)
+5. **Start dictating**  -  Hold the **Right Option** key, speak, and release. Your words appear at the cursor!
 
 ---
 
@@ -124,15 +124,15 @@ Models are downloaded automatically from [HuggingFace](https://huggingface.co/ar
 Open Settings from the menu bar popover or with **⌘,**
 
 ### General
-- **Activation mode** — Push-to-Talk or Double-Tap Toggle
-- **Hotkey** — Choose from Right Option, Right Command, Fn, function keys, etc.
-- **Language** — Auto-detect or specify (English, Spanish, French, German, Chinese, Japanese, and more)
+- **Activation mode**  -  Push-to-Talk or Double-Tap Toggle
+- **Hotkey**  -  Choose from Right Option, Right Command, Fn, function keys, etc.
+- **Language**  -  Auto-detect or specify (English, Spanish, French, German, Chinese, Japanese, and more)
 - **Launch at login**
 
 ### Audio
-- **Max recording duration** — 30s, 60s, 120s, or 300s
-- **Silence detection** — Auto-stop recording after configurable silence
-- **Input device** — Select which microphone to use
+- **Max recording duration**  -  30s, 60s, 120s, or 300s
+- **Silence detection**  -  Auto-stop recording after configurable silence
+- **Input device**  -  Select which microphone to use
 
 ### Models
 - View system info and WhisperKit's hardware recommendation
@@ -147,20 +147,20 @@ VocaMac is built with a clean, modular architecture using native Swift and Swift
 
 ```
 VocaMacApp (SwiftUI MenuBarExtra)
-├── AppState          — Central observable state
-├── HotKeyManager     — CGEventTap global hotkey listener
-├── AudioEngine       — AVAudioEngine mic capture (16kHz, mono, Float32)
-├── WhisperService    — WhisperKit async transcription wrapper
-│   └── ModelManager  — Model download, storage, device recommendations
-│       └── SystemInfo — Hardware detection & model recommendation
-├── TextInjector      — Clipboard + Cmd+V text injection
-├── MenuBarView       — Status popover UI
-└── SettingsView      — Configuration tabs (General, Models, Audio, About)
+├── AppState           -  Central observable state
+├── HotKeyManager      -  CGEventTap global hotkey listener
+├── AudioEngine        -  AVAudioEngine mic capture (16kHz, mono, Float32)
+├── WhisperService     -  WhisperKit async transcription wrapper
+│   └── ModelManager   -  Model download, storage, device recommendations
+│       └── SystemInfo  -  Hardware detection & model recommendation
+├── TextInjector       -  Clipboard + Cmd+V text injection
+├── MenuBarView        -  Status popover UI
+└── SettingsView       -  Configuration tabs (General, Models, Audio, About)
 ```
 
 For detailed documentation, see:
-- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Technical Architecture
-- [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — Data Model & Entity Relationships
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)  -  Technical Architecture
+- [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md)  -  Data Model & Entity Relationships
 
 ---
 
@@ -216,7 +216,7 @@ VocaMac/
 # Debug build
 swift build
 
-# Release build (optimized — recommended for actual use)
+# Release build (optimized  -  recommended for actual use)
 swift build -c release
 
 # Run
@@ -250,11 +250,11 @@ Use `--keep-build` to preserve build artifacts:
 
 ## 🗺️ Roadmap
 
-- [x] **v0.1.0** — MVP: Menu bar app, push-to-talk, double-tap toggle, WhisperKit integration, text injection, settings
-- [ ] **v0.2.0** — Onboarding flow, transcription history, ~~audio feedback sounds~~ ✅
-- [ ] **v0.3.0** — Custom prompts, real-time streaming transcription, word-level timestamps
-- [ ] **v0.4.0** — Auto-updates via Sparkle, code signing, DMG distribution
-- [ ] **v1.0.0** — Homebrew Cask, polished UI, performance tuning
+- [x] **v0.1.0**  -  MVP: Menu bar app, push-to-talk, double-tap toggle, WhisperKit integration, text injection, settings
+- [ ] **v0.2.0**  -  Onboarding flow, transcription history, ~~audio feedback sounds~~ ✅
+- [ ] **v0.3.0**  -  Custom prompts, real-time streaming transcription, word-level timestamps
+- [ ] **v0.4.0**  -  Auto-updates via Sparkle, code signing, DMG distribution
+- [ ] **v1.0.0**  -  Homebrew Cask, polished UI, performance tuning
 
 ---
 
@@ -274,23 +274,23 @@ Each platform uses native technologies for the best possible integration, while 
 
 ## 🤝 Related Projects
 
-- [WhisperKit](https://github.com/argmaxinc/WhisperKit) — Swift native on-device speech recognition
-- [VocaLinux](https://github.com/jatinkrmalik/vocalinux) — Voice-to-text for Linux
-- [OpenAI Whisper](https://github.com/openai/whisper) — Original Whisper model
+- [WhisperKit](https://github.com/argmaxinc/WhisperKit)  -  Swift native on-device speech recognition
+- [VocaLinux](https://github.com/jatinkrmalik/vocalinux)  -  Voice-to-text for Linux
+- [OpenAI Whisper](https://github.com/openai/whisper)  -  Original Whisper model
 
 ---
 
 ## ⚠️ Known Limitations
 
-- **Ad-hoc code signing** — VocaMac uses ad-hoc signing for development builds. Accessibility and Input Monitoring permissions in System Settings → Privacy & Security will reset on every rebuild. You'll need to re-grant them after each build.
-- **First launch requires internet** — WhisperKit downloads the speech recognition model on first run. All subsequent launches work fully offline.
-- **macOS only** — VocaMac requires macOS 13 (Ventura) or later.
+- **Ad-hoc code signing**  -  VocaMac uses ad-hoc signing for development builds. Accessibility and Input Monitoring permissions in System Settings → Privacy & Security will reset on every rebuild. You'll need to re-grant them after each build.
+- **First launch requires internet**  -  WhisperKit downloads the speech recognition model on first run. All subsequent launches work fully offline.
+- **macOS only**  -  VocaMac requires macOS 13 (Ventura) or later.
 
 ---
 
 ## 📄 License
 
-AGPL-3.0 License — see [LICENSE](LICENSE) for details.
+AGPL-3.0 License  -  see [LICENSE](LICENSE) for details.
 
 ---
 
