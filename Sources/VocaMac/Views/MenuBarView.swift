@@ -143,27 +143,25 @@ struct MenuBarView: View {
 
             // CPU & RAM usage display
             HStack(spacing: 10) {
-                HStack(spacing: 3) {
-                    Image(systemName: "cpu")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Text(String(format: "%.0f%%", processMonitor.cpuUsage))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                }
-                .help("CPU: \(String(format: "%.1f%%", processMonitor.cpuUsage))\nThreads: \(processMonitor.threadCount)\nPolled every 5s")
+                ResourceBadge(
+                    icon: "cpu",
+                    value: String(format: "%.0f%%", processMonitor.cpuUsage),
+                    details: [
+                        ("CPU Usage", String(format: "%.1f%%", processMonitor.cpuUsage)),
+                        ("Threads", "\(processMonitor.threadCount)"),
+                        ("Cores", "\(ProcessInfo.processInfo.activeProcessorCount)"),
+                    ]
+                )
 
-                HStack(spacing: 3) {
-                    Image(systemName: "memorychip")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                    Text(formattedMemory(processMonitor.memoryMB))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .monospacedDigit()
-                }
-                .help("Memory: \(String(format: "%.1f MB", processMonitor.memoryMB))\nPeak: \(String(format: "%.1f MB", processMonitor.memoryPeakMB))\nPolled every 5s")
+                ResourceBadge(
+                    icon: "memorychip",
+                    value: formattedMemory(processMonitor.memoryMB),
+                    details: [
+                        ("Resident", String(format: "%.1f MB", processMonitor.memoryMB)),
+                        ("Peak", String(format: "%.1f MB", processMonitor.memoryPeakMB)),
+                        ("System", "\(ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)) GB"),
+                    ]
+                )
             }
         }
     }
@@ -387,6 +385,68 @@ struct MenuRowButtonStyle: ButtonStyle {
             .onHover { hovering in
                 isHovered = hovering
             }
+    }
+}
+
+// MARK: - Resource Badge
+
+/// A compact CPU/RAM badge that shows a detail popover on hover.
+struct ResourceBadge: View {
+    let icon: String
+    let value: String
+    let details: [(String, String)]
+
+    @State private var isHovered = false
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Image(systemName: icon)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .monospacedDigit()
+        }
+        .padding(.horizontal, 6)
+        .padding(.vertical, 3)
+        .background(
+            RoundedRectangle(cornerRadius: 5)
+                .fill(isHovered ? Color.primary.opacity(0.08) : Color.clear)
+        )
+        .onHover { hovering in
+            withAnimation(.easeInOut(duration: 0.15)) {
+                isHovered = hovering
+            }
+        }
+        .popover(isPresented: $isHovered, arrowEdge: .bottom) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 4) {
+                    Image(systemName: icon)
+                        .font(.subheadline)
+                        .foregroundStyle(.blue)
+                    Text(value)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                }
+
+                Divider()
+
+                ForEach(details, id: \.0) { label, val in
+                    HStack {
+                        Text(label)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                        Text(val)
+                            .font(.caption)
+                            .monospacedDigit()
+                    }
+                }
+            }
+            .padding(10)
+            .frame(width: 160)
+        }
     }
 }
 
