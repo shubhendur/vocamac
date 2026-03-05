@@ -333,7 +333,7 @@ h4 { font-size: 16px; font-weight: 600; }
     color: var(--text-secondary);
 }
 .mockup__menubar-left, .mockup__menubar-right { display: flex; align-items: center; gap: 12px; }
-.mockup__apple::before { content: ""; font-size: 14px; }
+.mockup__apple { opacity: 0.8; }
 .mockup__menubar-item { font-size: 12px; }
 .mockup__menubar-icon { font-size: 14px; }
 .mockup__mic-icon { width: auto; height: 14px; filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.5)); }
