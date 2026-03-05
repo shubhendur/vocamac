@@ -4,7 +4,7 @@
 
 <h1 align="center">VocaMac</h1>
 
-[![Build & Test](https://github.com/jatinkrmalik/vocamac/actions/workflows/ci.yml/badge.svg)](https://github.com/jatinkrmalik/vocamac/actions/workflows/ci.yml) [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0) [![Platform: macOS](https://img.shields.io/badge/Platform-macOS%2013%2B-lightgrey.svg)](https://github.com/jatinkrmalik/vocamac) [![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org) [![Website](https://img.shields.io/badge/Web-vocamac.com-007AFF.svg)](https://vocamac.com) [![GitHub stars](https://img.shields.io/github/stars/jatinkrmalik/vocamac?style=social)](https://github.com/jatinkrmalik/vocamac/stargazers)
+[![Build & Test](https://github.com/jatinkrmalik/vocamac/actions/workflows/ci.yml/badge.svg)](https://github.com/jatinkrmalik/vocamac/actions/workflows/ci.yml) [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL--3.0-blue.svg)](https://www.gnu.org/licenses/agpl-3.0) [![Platform: macOS](https://img.shields.io/badge/Platform-macOS%2013%2B-lightgrey.svg)](https://github.com/jatinkrmalik/vocamac) [![Swift 5.9+](https://img.shields.io/badge/Swift-5.9%2B-orange.svg)](https://swift.org) [![Website](https://img.shields.io/badge/Web-vocamac.com-blue.svg)](https://vocamac.com)Website](https://img.shields.io/badge/Web-vocamac.com-007AFF.svg)](https://vocamac.com) [![GitHub stars](https://img.shields.io/github/stars/jatinkrmalik/vocamac?style=social)](https://github.com/jatinkrmalik/vocamac/stargazers)
 
 
 **Local voice-to-text for macOS — powered by [WhisperKit](https://github.com/argmaxinc/WhisperKit)**
@@ -159,7 +159,6 @@ VocaMacApp (SwiftUI MenuBarExtra)
 ```
 
 For detailed documentation, see:
-- [`docs/PRD.md`](docs/PRD.md) — Product Requirements Document
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Technical Architecture
 - [`docs/DATA_MODEL.md`](docs/DATA_MODEL.md) — Data Model & Entity Relationships
 
@@ -189,6 +188,7 @@ VocaMac/
 │       │   ├── HotKeyManager.swift # CGEventTap global hotkeys
 │       │   ├── WhisperService.swift# WhisperKit transcription wrapper
 │       │   ├── ModelManager.swift  # Model download & management
+│       │   ├── SoundManager.swift  # Audio feedback for recording
 │       │   ├── TextInjector.swift  # Clipboard-based text injection
 │       │   └── SystemInfo.swift    # Hardware detection
 │       ├── Models/
@@ -198,8 +198,12 @@ VocaMac/
 │       └── Resources/
 ├── Tests/
 │   └── VocaMacTests/
+├── scripts/
+│   ├── build.sh                    # Build .app bundle
+│   ├── install.sh                  # Install to ~/.local/bin
+│   └── uninstall.sh                # Full uninstall & cleanup
+├── web/                            # Marketing website (vocamac.com)
 ├── docs/
-│   ├── PRD.md                      # Product Requirements Document
 │   ├── ARCHITECTURE.md             # Technical Architecture
 │   └── DATA_MODEL.md               # Data Model & ERD
 ├── LICENSE                         # AGPL-3.0 License
@@ -220,6 +224,26 @@ swift run VocaMac
 
 # Run tests (requires Xcode)
 swift test
+
+# Build .app bundle
+./scripts/build.sh
+
+# Install launcher scripts
+./scripts/install.sh
+```
+
+### Uninstall
+
+To completely remove VocaMac and all its data (downloaded models, preferences, caches):
+
+```bash
+./scripts/uninstall.sh
+```
+
+Use `--keep-build` to preserve build artifacts:
+
+```bash
+./scripts/uninstall.sh --keep-build
 ```
 
 ---
@@ -227,7 +251,7 @@ swift test
 ## 🗺️ Roadmap
 
 - [x] **v0.1.0** — MVP: Menu bar app, push-to-talk, double-tap toggle, WhisperKit integration, text injection, settings
-- [ ] **v0.2.0** — Onboarding flow, transcription history, audio feedback sounds
+- [ ] **v0.2.0** — Onboarding flow, transcription history, ~~audio feedback sounds~~ ✅
 - [ ] **v0.3.0** — Custom prompts, real-time streaming transcription, word-level timestamps
 - [ ] **v0.4.0** — Auto-updates via Sparkle, code signing, DMG distribution
 - [ ] **v1.0.0** — Homebrew Cask, polished UI, performance tuning
@@ -256,6 +280,14 @@ Each platform uses native technologies for the best possible integration, while 
 
 ---
 
+## ⚠️ Known Limitations
+
+- **Ad-hoc code signing** — VocaMac uses ad-hoc signing for development builds. Accessibility and Input Monitoring permissions in System Settings → Privacy & Security will reset on every rebuild. You'll need to re-grant them after each build.
+- **First launch requires internet** — WhisperKit downloads the speech recognition model on first run. All subsequent launches work fully offline.
+- **macOS only** — VocaMac requires macOS 13 (Ventura) or later.
+
+---
+
 ## 📄 License
 
 AGPL-3.0 License — see [LICENSE](LICENSE) for details.
@@ -264,4 +296,4 @@ AGPL-3.0 License — see [LICENSE](LICENSE) for details.
 
 ## 👨‍💻 Author
 
-**Jatin Kumar Malik** · [GitHub](https://github.com/jatinkrmalik) · [vocamac.com](https://vocamac.com)
+**Jatin Kumar Malik** · [GitHub](https://github.com/jatinkrmalik) · [𝕏](https://x.com/intent/user?screen_name=jatinkrmalik) · [vocamac.com](https://vocamac.com)
