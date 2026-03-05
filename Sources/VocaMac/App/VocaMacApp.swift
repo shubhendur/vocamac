@@ -149,19 +149,7 @@ struct MenuBarIcon: View {
             return NSImage(systemSymbolName: "mic", accessibilityDescription: "VocaMac") ?? NSImage()
         }
 
-        if appStatus == .idle {
-            // Use VocaMac brand blue (#007AFF) for the idle state
-            let tinted = NSImage(size: baseImage.size, flipped: false) { rect in
-                baseImage.draw(in: rect)
-                NSColor(red: 0, green: 0.478, blue: 1.0, alpha: 1.0).set()
-                rect.fill(using: .sourceAtop)
-                return true
-            }
-            tinted.isTemplate = false
-            return tinted
-        }
-
-        // For active states, tint the icon with the status color
+        // Tint the icon with the status color
         let tintColor = nsColor
         let size = baseImage.size
 
@@ -178,7 +166,7 @@ struct MenuBarIcon: View {
     private var iconName: String {
         switch appStatus {
         case .idle:
-            return "mic"
+            return "mic.fill"
         case .recording:
             return "mic.fill"
         case .processing:
@@ -190,9 +178,9 @@ struct MenuBarIcon: View {
 
     private var nsColor: NSColor {
         switch appStatus {
-        case .idle:       return .labelColor
+        case .idle:       return NSColor(red: 0, green: 0.478, blue: 1.0, alpha: 1.0)
         case .recording:  return .systemRed
-        case .processing: return .systemOrange
+        case .processing: return NSColor(red: 0.749, green: 0.353, blue: 0.949, alpha: 1.0) // #BF5AF2
         case .error:      return .systemYellow
         }
     }
