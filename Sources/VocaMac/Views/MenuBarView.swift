@@ -6,9 +6,79 @@
 
 import SwiftUI
 
+// MARK: - Process Monitor
+
+/// Polls the current process for CPU and memory usage every 5 seconds.
+final class ProcessMonitor: ObservableObject {
+    @Published var cpuUsage: Double = 0       // percentage (0–100+)
+    @Published var memoryMB: Double = 0       // resident memory in MB
+    @Published var memoryPeakMB: Double = 0   // peak memory seen
+    @Published var threadCount: Int = 0       // active thread count
+
+    private var timer: Timer?
+
+    init() {
+        refresh()
+        timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
+            self?.refresh()
+        }
+    }
+
+    deinit { timer?.invalidate() }
+
+    func refresh() {
+        // --- Memory via mach_task_basic_info ---
+        var taskInfo = mach_task_basic_info()
+        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
+        let kr = withUnsafeMutablePointer(to: &taskInfo) {
+            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
+                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+            }
+        }
+        if kr == KERN_SUCCESS {
+            let mb = Double(taskInfo.resident_size) / (1024 * 1024)
+            DispatchQueue.main.async {
+                self.memoryMB = mb
+                self.memoryPeakMB = max(self.memoryPeakMB, mb)
+            }
+        }
+
+        // --- CPU via task_threads + thread_basic_info ---
+        var threadList: thread_act_array_t?
+        var threadCount: mach_msg_type_number_t = 0
+        let threadKr = task_threads(mach_task_self_, &threadList, &threadCount)
+        guard threadKr == KERN_SUCCESS, let threads = threadList else { return }
+
+        var totalCPU: Double = 0
+        for i in 0..<Int(threadCount) {
+            var threadInfo = thread_basic_info()
+            var infoCount = mach_msg_type_number_t(MemoryLayout<thread_basic_info_data_t>.size / MemoryLayout<natural_t>.size)
+            let infoKr = withUnsafeMutablePointer(to: &threadInfo) {
+                $0.withMemoryRebound(to: integer_t.self, capacity: Int(infoCount)) {
+                    thread_info(threads[i], thread_flavor_t(THREAD_BASIC_INFO), $0, &infoCount)
+                }
+            }
+            if infoKr == KERN_SUCCESS && threadInfo.flags != TH_FLAGS_IDLE {
+                totalCPU += Double(threadInfo.cpu_usage) / Double(TH_USAGE_SCALE) * 100
+            }
+        }
+
+        let count2 = Int(threadCount)
+        // Deallocate the thread list
+        let size = vm_size_t(MemoryLayout<thread_t>.stride * Int(threadCount))
+        vm_deallocate(mach_task_self_, vm_address_t(bitPattern: threads), size)
+
+        DispatchQueue.main.async {
+            self.cpuUsage = totalCPU
+            self.threadCount = count2
+        }
+    }
+}
+
 struct MenuBarView: View {
     @EnvironmentObject var appState: AppState
     @ObservedObject var settingsManager: SettingsWindowManager
+    @StateObject private var processMonitor = ProcessMonitor()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -71,11 +141,30 @@ struct MenuBarView: View {
 
             Spacer()
 
-            // RAM usage display
-            Text(currentMemoryUsage)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .monospacedDigit()
+            // CPU & RAM usage display
+            HStack(spacing: 10) {
+                HStack(spacing: 3) {
+                    Image(systemName: "cpu")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(String(format: "%.0f%%", processMonitor.cpuUsage))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+                .help("CPU: \(String(format: "%.1f%%", processMonitor.cpuUsage))\nThreads: \(processMonitor.threadCount)\nPolled every 5s")
+
+                HStack(spacing: 3) {
+                    Image(systemName: "memorychip")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(formattedMemory(processMonitor.memoryMB))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+                .help("Memory: \(String(format: "%.1f MB", processMonitor.memoryMB))\nPeak: \(String(format: "%.1f MB", processMonitor.memoryPeakMB))\nPolled every 5s")
+            }
         }
     }
 
@@ -274,17 +363,8 @@ struct MenuBarView: View {
         }
     }
 
-    /// Current app memory usage formatted as a human-readable string
-    private var currentMemoryUsage: String {
-        var info = mach_task_basic_info()
-        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
-        let result = withUnsafeMutablePointer(to: &info) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
-            }
-        }
-        guard result == KERN_SUCCESS else { return "— MB" }
-        let mb = Double(info.resident_size) / (1024 * 1024)
+    /// Formats memory in MB to a compact human-readable string
+    private func formattedMemory(_ mb: Double) -> String {
         if mb >= 1024 {
             return String(format: "%.1f GB", mb / 1024)
         }
