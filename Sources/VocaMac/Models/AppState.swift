@@ -102,6 +102,7 @@ final class AppState: ObservableObject {
     @AppStorage("vocamac.launchAtLogin") var launchAtLogin: Bool = false
     @AppStorage("vocamac.preserveClipboard") var preserveClipboard: Bool = true
     @AppStorage("vocamac.soundEffectsEnabled") var soundEffectsEnabled: Bool = true
+    @AppStorage("vocamac.showCursorIndicator") var showCursorIndicator: Bool = true
 
     // MARK: - Services
 
@@ -111,6 +112,7 @@ final class AppState: ObservableObject {
     let hotKeyManager = HotKeyManager()
     let modelManager = ModelManager()
     let soundManager = SoundManager()
+    let cursorOverlay = CursorOverlayManager()
 
     // MARK: - Private
 
@@ -152,6 +154,7 @@ final class AppState: ObservableObject {
         audioEngine.onAudioLevel = { [weak self] level in
             Task { @MainActor in
                 self?.audioLevel = level
+                self?.cursorOverlay.updateAudioLevel(level)
             }
         }
 
@@ -232,6 +235,11 @@ final class AppState: ObservableObject {
             soundManager.playStartSound()
         }
 
+        // Show cursor indicator
+        if showCursorIndicator {
+            cursorOverlay.show()
+        }
+
         audioEngine.startRecording(
             silenceThreshold: Float(silenceThreshold),
             silenceDuration: silenceDuration,
@@ -250,6 +258,9 @@ final class AppState: ObservableObject {
         if soundEffectsEnabled {
             soundManager.playStopSound()
         }
+
+        // Hide cursor indicator
+        cursorOverlay.hide()
 
         guard !audioData.isEmpty else {
             appStatus = .idle
