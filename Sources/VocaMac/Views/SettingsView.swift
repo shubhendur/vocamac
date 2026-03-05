@@ -159,7 +159,7 @@ struct GeneralSettingsTab: View {
                 PermissionRow(
                     name: "Input Monitoring",
                     icon: "keyboard",
-                    status: appState.accessibilityPermission,  // Shares status with Accessibility
+                    status: appState.inputMonitoringPermission,
                     action: {
                         if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
                             NSWorkspace.shared.open(url)

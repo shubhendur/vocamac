@@ -83,6 +83,9 @@ final class AppState: ObservableObject {
     /// Accessibility permission status
     @Published var accessibilityPermission: PermissionStatus = .notDetermined
 
+    /// Input Monitoring permission status
+    @Published var inputMonitoringPermission: PermissionStatus = .notDetermined
+
     /// Detected system capabilities
     @Published var systemCapabilities: SystemCapabilities?
 
@@ -198,6 +201,32 @@ final class AppState: ObservableObject {
         // Check accessibility permission
         let accessibilityGranted = HotKeyManager.checkAccessibilityPermission(prompt: false)
         accessibilityPermission = accessibilityGranted ? .granted : .denied
+
+        // Check input monitoring permission
+        // If we can successfully create an event tap (even briefly), Input Monitoring is granted.
+        // CGPreflightListenEventAccess() is available on macOS 15+, so we use a tap test as fallback.
+        let inputMonitoringGranted = checkInputMonitoringPermission()
+        inputMonitoringPermission = inputMonitoringGranted ? .granted : .denied
+    }
+
+    /// Check Input Monitoring permission by attempting to create a passive event tap.
+    /// Returns true if the permission is granted.
+    private func checkInputMonitoringPermission() -> Bool {
+        // Try creating a passive listen-only event tap
+        let tap = CGEvent.tapCreate(
+            tap: .cgSessionEventTap,
+            place: .headInsertEventTap,
+            options: .listenOnly,
+            eventsOfInterest: CGEventMask(1 << CGEventType.keyDown.rawValue),
+            callback: { _, _, event, _ in Unmanaged.passRetained(event) },
+            userInfo: nil
+        )
+        if let tap = tap {
+            // Successfully created — permission is granted. Clean up immediately.
+            CFMachPortInvalidate(tap)
+            return true
+        }
+        return false
     }
 
     func requestMicrophonePermission() {

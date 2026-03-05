@@ -97,7 +97,7 @@ struct MenuBarView: View {
             }
 
             // Permissions Warning
-            if appState.micPermission != .granted || appState.accessibilityPermission != .granted {
+            if appState.micPermission != .granted || appState.accessibilityPermission != .granted || appState.inputMonitoringPermission != .granted {
                 Divider()
                 permissionsSection
             }
@@ -274,6 +274,26 @@ struct MenuBarView: View {
                 .foregroundStyle(.orange)
 
                 Text("Required for global hotkeys and text injection. Opens System Settings.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            if appState.inputMonitoringPermission != .granted {
+                Button {
+                    if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_ListenEvent") {
+                        NSWorkspace.shared.open(url)
+                    }
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
+                        appState.checkPermissions()
+                    }
+                } label: {
+                    Label("Grant Input Monitoring", systemImage: "keyboard")
+                        .font(.callout)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.orange)
+
+                Text("Required to detect hotkey presses system-wide. Opens System Settings.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
