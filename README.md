@@ -30,6 +30,38 @@ VocaMac is a native macOS menu bar application that transcribes your voice to te
 
 ---
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="docs/screenshots/popover-panel.png" alt="VocaMac Popover" width="400">
+  <br>
+  <em>Menu bar popover with status and controls</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/menu-bar-idle.png" alt="Menu Bar - Idle" width="250">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/menu-bar-recording.png" alt="Menu Bar - Recording" width="250">
+  <br>
+  <em>Menu bar icon: idle (left) and recording (right)</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/settings-general.png" alt="Settings - General" width="400">
+  &nbsp;&nbsp;
+  <img src="docs/screenshots/settings-models.png" alt="Settings - Models" width="400">
+  <br>
+  <em>Settings: General tab (left) and Models tab with resource monitoring (right)</em>
+</p>
+
+<p align="center">
+  <img src="docs/screenshots/cursor-indicator.png" alt="Cursor Indicator" width="400">
+  <br>
+  <em>Floating mic indicator near text cursor during recording</em>
+</p>
+
+---
+
 ## ✨ Features
 
 - **🔒 100% Local** - All audio processing happens on your machine. No internet required (except for one-time model downloads).
