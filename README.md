@@ -215,7 +215,7 @@ swift build -c release
 swift run VocaMac
 
 # Run tests (requires Xcode)
-xcodebuild test -scheme VocaMac -destination 'platform=macOS'
+swift test
 ```
 
 ---

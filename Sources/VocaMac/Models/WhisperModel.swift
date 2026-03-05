@@ -28,11 +28,6 @@ enum ModelSize: String, CaseIterable, Codable, Identifiable {
         }
     }
 
-    /// Model file name in GGML format
-    var fileName: String {
-        "ggml-\(rawValue).bin"
-    }
-
     /// Approximate file size on disk in bytes
     var fileSizeBytes: Int64 {
         switch self {
@@ -82,11 +77,6 @@ enum ModelSize: String, CaseIterable, Codable, Identifiable {
         case .medium:  return "Excellent"
         case .largeV3: return "Best"
         }
-    }
-
-    /// Download URL from Hugging Face
-    var downloadURL: URL {
-        URL(string: "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/\(fileName)")!
     }
 }
 
