@@ -127,22 +127,34 @@ final class ModelManager {
             config.load = false  // Don't load into memory, just download
 
             // Report initial progress
-            onProgress(0.1)
+            onProgress(0.05)
 
-            // Simulate progress while downloading, since WhisperKit doesn't expose granular progress
-            let progressTask = Task {
-                var currentProgress = 0.1
-                while currentProgress < 0.95 {
-                    try? await Task.sleep(nanoseconds: 500_000_000)  // 0.5 second intervals
-                    currentProgress += Double.random(in: 0.05...0.15)
-                    onProgress(min(currentProgress, 0.95))
+            // Simulate progress while downloading, since WhisperKit doesn't
+            // expose granular download progress in this usage pattern.
+            // Use `try` (not `try?`) so Task.sleep throws on cancellation,
+            // which cleanly exits the loop.
+            let progressTask = Task { @Sendable in
+                var currentProgress = 0.05
+                do {
+                    while !Task.isCancelled && currentProgress < 0.90 {
+                        try await Task.sleep(nanoseconds: 800_000_000)  // 0.8s intervals
+                        guard !Task.isCancelled else { break }
+                        currentProgress += Double.random(in: 0.03...0.08)
+                        currentProgress = min(currentProgress, 0.90)
+                        onProgress(currentProgress)
+                    }
+                } catch {
+                    // Task was cancelled — stop updating progress
                 }
             }
 
             let _ = try await WhisperKit(config)
-            
-            // Cancel progress simulation and report completion
+
+            // Stop the simulated progress and report completion
             progressTask.cancel()
+            // Small delay to ensure the cancelled task has stopped
+            // before we send the final progress update
+            try? await Task.sleep(nanoseconds: 50_000_000)  // 50ms
             onProgress(1.0)
             print("[ModelManager] Model '\(whisperKitModelName(for: size))' downloaded successfully")
         } catch {
