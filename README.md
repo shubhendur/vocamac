@@ -4,6 +4,8 @@
 
 <h1 align="center">VocaMac</h1>
 
+<p align="center"><strong>Your voice, your Mac, your privacy. Open-source dictation powered by AI.</strong></p>
+
 <div align="center">
   
 [![Build & Test](https://github.com/jatinkrmalik/vocamac/actions/workflows/ci.yml/badge.svg)](https://github.com/jatinkrmalik/vocamac/actions/workflows/ci.yml)
@@ -23,8 +25,6 @@
 [![Twitter Follow](https://img.shields.io/twitter/follow/jatinkrmalik?style=social)](https://x.com/intent/user?screen_name=jatinkrmalik)
 
 </div>
-
-**Your voice, your Mac, your privacy. Open-source dictation powered by AI.**
 
 Speak. It types. 100% offline, open-source voice-to-text for macOS - powered by [WhisperKit](https://github.com/argmaxinc/WhisperKit). No cloud, no subscriptions, no data leaves your device. Just hold a hotkey, speak, and your words appear wherever your cursor is.
 
