@@ -120,10 +120,11 @@
             <div class="hero__content">
                 <div class="hero__badges">
                     <span class="badge badge--alpha">ALPHA RELEASE</span>
-                    <span class="badge badge--outline">v0.1.0</span>
+                    <span class="badge badge--outline">v0.1.1</span>
                 </div>
                 <h1 class="hero__headline">
-                    Your Voice, Your Mac,<br>
+                    Your Voice,<br>
+                    Your Mac,<br>
                     <span class="text-gradient">Your Privacy.</span>
                 </h1>
                 <p class="hero__subtext">
@@ -426,39 +427,50 @@
             </div>
 
             <!-- Install Options Tabs -->
-            <div class="install__tabs">
-                <button class="install__tab install__tab--active" data-tab="dmg">📦 Download DMG</button>
-                <button class="install__tab" data-tab="source">🛠️ Build from Source</button>
+            <div class="install__tabs" role="tablist">
+                <button class="install__tab install__tab--active" role="tab" aria-selected="true" onclick="switchInstallTab('dmg', this)">📦 Download DMG</button>
+                <button class="install__tab" role="tab" aria-selected="false" onclick="switchInstallTab('source', this)">🛠️ Build from Source</button>
             </div>
 
             <!-- DMG Option -->
-            <div class="install__card install__panel install__panel--active" data-panel="dmg">
+            <div class="install__card" id="install-dmg">
                 <div class="install__steps">
-                    <div class="install__step">
+                    <div class="install__step visible">
                         <div class="install__step-num">1</div>
                         <div>
                             <h4>Download</h4>
                             <p class="text-secondary">Grab the latest DMG from GitHub Releases.</p>
-                            <a href="https://github.com/jatinkrmalik/vocamac/releases/latest" class="button button--primary" style="margin-top: 12px; display: inline-flex;" target="_blank" rel="noopener">
+                            <a href="https://github.com/jatinkrmalik/vocamac/releases/latest" class="button button--primary install__download-btn" target="_blank" rel="noopener">
                                 Download Latest Release →
                             </a>
                         </div>
                     </div>
-                    <div class="install__step">
+                    <div class="install__step visible">
                         <div class="install__step-num">2</div>
                         <div>
-                            <h4>Install & Remove Quarantine</h4>
+                            <h4>Install &amp; Remove Quarantine</h4>
                             <p class="text-secondary">Open the DMG, drag VocaMac to Applications, then remove the quarantine flag (required until we get code signing):</p>
                             <div class="code-block">
-                                <code>xattr -cr /Applications/VocaMac.app</code>
+                                <div class="code-block__titlebar">
+                                    <div class="code-block__dots">
+                                        <span class="code-block__dot code-block__dot--red"></span>
+                                        <span class="code-block__dot code-block__dot--yellow"></span>
+                                        <span class="code-block__dot code-block__dot--green"></span>
+                                    </div>
+                                    <span class="code-block__title">Terminal</span>
+                                    <button class="code-block__copy" onclick="copyCode(this)">📋 Copy</button>
+                                </div>
+                                <div class="code-block__body">
+                                    <code><span class="prompt">$ </span>sudo xattr -cr /Applications/VocaMac.app</code>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="install__step">
+                    <div class="install__step visible">
                         <div class="install__step-num">3</div>
                         <div>
-                            <h4>Grant Permissions & Dictate</h4>
-                            <p class="text-secondary">Open VocaMac, grant <strong>Microphone</strong>, <strong>Accessibility</strong>, and <strong>Input Monitoring</strong> permissions. Restart VocaMac after granting Input Monitoring.</p>
+                            <h4>Grant Permissions &amp; Dictate</h4>
+                            <p class="text-secondary">Open VocaMac and grant <strong>Microphone</strong>, <strong>Accessibility</strong>, and <strong>Input Monitoring</strong> permissions when prompted. Restart the app after granting Input Monitoring.</p>
                             <p class="text-secondary" style="margin-top: 8px;">Hold <strong>Right Option (⌥)</strong> → speak → release. Text appears at your cursor. ✨</p>
                         </div>
                     </div>
@@ -474,26 +486,37 @@
                 </div>
             </div>
 
-            <!-- Source Option -->
-            <div class="install__card install__panel" data-panel="source">
+            <!-- Source Option (hidden by default) -->
+            <div class="install__card" id="install-source" style="display: none;">
                 <div class="install__steps">
-                    <div class="install__step">
+                    <div class="install__step visible">
                         <div class="install__step-num">1</div>
                         <div>
-                            <h4>Clone & Install</h4>
+                            <h4>Clone &amp; Install</h4>
                             <div class="code-block">
-                                <code>git clone https://github.com/jatinkrmalik/vocamac.git
-cd vocamac
-make install</code>
+                                <div class="code-block__titlebar">
+                                    <div class="code-block__dots">
+                                        <span class="code-block__dot code-block__dot--red"></span>
+                                        <span class="code-block__dot code-block__dot--yellow"></span>
+                                        <span class="code-block__dot code-block__dot--green"></span>
+                                    </div>
+                                    <span class="code-block__title">Terminal</span>
+                                    <button class="code-block__copy" onclick="copyCode(this)">📋 Copy</button>
+                                </div>
+                                <div class="code-block__body">
+                                    <code><span class="prompt">$ </span>git clone https://github.com/jatinkrmalik/vocamac.git
+<span class="prompt">$ </span>cd vocamac
+<span class="prompt">$ </span>make install</code>
+                                </div>
                             </div>
-                            <p class="text-secondary" style="margin-top: 8px;">This builds VocaMac, installs it to <strong>/Applications</strong>, and launches it.</p>
+                            <p class="text-secondary" style="margin-top: 8px;">Builds VocaMac, installs to <strong>/Applications</strong>, and launches it. That's it.</p>
                         </div>
                     </div>
-                    <div class="install__step">
+                    <div class="install__step visible">
                         <div class="install__step-num">2</div>
                         <div>
-                            <h4>Grant Permissions & Dictate</h4>
-                            <p class="text-secondary">Grant <strong>Microphone</strong>, <strong>Accessibility</strong>, and <strong>Input Monitoring</strong> permissions. Restart VocaMac after granting Input Monitoring.</p>
+                            <h4>Grant Permissions &amp; Dictate</h4>
+                            <p class="text-secondary">Grant <strong>Microphone</strong>, <strong>Accessibility</strong>, and <strong>Input Monitoring</strong> permissions when prompted. Restart the app after granting Input Monitoring.</p>
                             <p class="text-secondary" style="margin-top: 8px;">Hold <strong>Right Option (⌥)</strong> → speak → release. Text appears at your cursor. ✨</p>
                         </div>
                     </div>
@@ -690,27 +713,41 @@ make install</code>
             });
         }, { threshold: 0.1 });
 
-        document.querySelectorAll('.feature-card, .step, .privacy__point, .model-card, .family-card, .faq__item, .install__step').forEach(el => {
+        document.querySelectorAll('.feature-card, .step, .privacy__point, .model-card, .family-card, .faq__item').forEach(el => {
             observer.observe(el);
         });
 
-        // ========== Install Tabs ==========
-        document.querySelectorAll('.install__tab').forEach(tab => {
-            tab.addEventListener('click', function() {
-                const target = this.dataset.tab;
-                // Toggle active tab
-                document.querySelectorAll('.install__tab').forEach(t => t.classList.remove('install__tab--active'));
-                this.classList.add('install__tab--active');
-                // Toggle active panel
-                document.querySelectorAll('.install__panel').forEach(p => p.classList.remove('install__panel--active'));
-                document.querySelector(`.install__panel[data-panel="${target}"]`)?.classList.add('install__panel--active');
-                // Re-trigger animations for new panel steps
-                document.querySelectorAll(`.install__panel[data-panel="${target}"] .install__step`).forEach(step => {
-                    step.classList.remove('visible');
-                    observer.observe(step);
-                });
+        // ========== Copy Code ==========
+        function copyCode(btn) {
+            const codeBlock = btn.closest('.code-block');
+            const code = codeBlock.querySelector('code').textContent
+                .replace(/^\$ /gm, '')  // Remove prompt symbols
+                .trim();
+            navigator.clipboard.writeText(code).then(() => {
+                btn.innerHTML = '✅ Copied!';
+                btn.classList.add('code-block__copy--copied');
+                setTimeout(() => {
+                    btn.innerHTML = '📋 Copy';
+                    btn.classList.remove('code-block__copy--copied');
+                }, 2000);
             });
-        });
+        }
+
+        // ========== Install Tabs ==========
+        function switchInstallTab(tab, btn) {
+            // Hide all panels
+            document.getElementById('install-dmg').style.display = 'none';
+            document.getElementById('install-source').style.display = 'none';
+            // Show selected panel
+            document.getElementById('install-' + tab).style.display = 'grid';
+            // Toggle active tab
+            document.querySelectorAll('.install__tab').forEach(t => {
+                t.classList.remove('install__tab--active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            btn.classList.add('install__tab--active');
+            btn.setAttribute('aria-selected', 'true');
+        }
     </script>
 </body>
 </html>
