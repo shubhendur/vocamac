@@ -205,14 +205,23 @@ final class AppState: ObservableObject {
         inputMonitoringPermission = inputMonitoringGranted ? .granted : .denied
     }
 
-    /// Check Input Monitoring permission by attempting to create a fresh event tap.
-    /// This is the most reliable method — existing taps may not reflect revocation
-    /// until the app restarts, but creating a new tap always reflects current state.
+    /// Check Input Monitoring permission.
+    /// Uses multiple strategies since no single approach is 100% reliable:
+    /// 1. If HotKeyManager created a tap, check if macOS has disabled it (revocation)
+    /// 2. If HotKeyManager failed to create a tap, permission is likely denied
+    /// 3. Try creating a fresh .cghidEventTap (same type HotKeyManager uses)
     private func checkInputMonitoringPermission() -> Bool {
-        // Always try creating a fresh temporary tap to test current permission state.
-        // Existing taps (via HotKeyManager) may not immediately reflect revocation.
+        // Strategy 1: If HotKeyManager has an active tap, check if macOS disabled it.
+        // macOS disables existing taps when Input Monitoring is revoked.
+        if hotKeyManager.isListening, let tap = hotKeyManager.activeEventTap {
+            return CGEvent.tapIsEnabled(tap: tap)
+        }
+
+        // Strategy 2: Try creating a fresh .cghidEventTap — the same type
+        // HotKeyManager uses. This is more accurate than .cgSessionEventTap
+        // which may inherit Terminal's permissions when launched from CLI.
         let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
+            tap: .cghidEventTap,
             place: .headInsertEventTap,
             options: .listenOnly,
             eventsOfInterest: CGEventMask(1 << CGEventType.keyDown.rawValue),
@@ -264,8 +273,9 @@ final class AppState: ObservableObject {
     func requestInputMonitoringPermission() {
         // Attempting to create an event tap triggers macOS to auto-add
         // the app to the Input Monitoring list in System Settings.
+        // Use .cghidEventTap (same as HotKeyManager) for consistent behavior.
         let tap = CGEvent.tapCreate(
-            tap: .cgSessionEventTap,
+            tap: .cghidEventTap,
             place: .headInsertEventTap,
             options: .listenOnly,
             eventsOfInterest: CGEventMask(1 << CGEventType.keyDown.rawValue),
