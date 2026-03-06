@@ -422,34 +422,44 @@
             <div class="section-header">
                 <span class="badge badge--alpha">ALPHA</span>
                 <h2>Get Started in Minutes</h2>
-                <p class="text-secondary">Build from source. We're in alpha — early adopters welcome.</p>
+                <p class="text-secondary">Download the DMG or build from source. We're in alpha — early adopters welcome.</p>
             </div>
-            <div class="install__card">
+
+            <!-- Install Options Tabs -->
+            <div class="install__tabs">
+                <button class="install__tab install__tab--active" data-tab="dmg">📦 Download DMG</button>
+                <button class="install__tab" data-tab="source">🛠️ Build from Source</button>
+            </div>
+
+            <!-- DMG Option -->
+            <div class="install__card install__panel install__panel--active" data-panel="dmg">
                 <div class="install__steps">
                     <div class="install__step">
                         <div class="install__step-num">1</div>
                         <div>
-                            <h4>Clone & Build</h4>
-                            <div class="code-block">
-                                <code>git clone https://github.com/jatinkrmalik/vocamac.git<br>cd vocamac<br>./scripts/install.sh</code>
-                            </div>
+                            <h4>Download</h4>
+                            <p class="text-secondary">Grab the latest DMG from GitHub Releases.</p>
+                            <a href="https://github.com/jatinkrmalik/vocamac/releases/latest" class="button button--primary" style="margin-top: 12px; display: inline-flex;" target="_blank" rel="noopener">
+                                Download Latest Release →
+                            </a>
                         </div>
                     </div>
                     <div class="install__step">
                         <div class="install__step-num">2</div>
                         <div>
-                            <h4>Grant Permissions</h4>
-                            <p class="text-secondary">System Settings → Privacy & Security → grant <strong>Accessibility</strong>, <strong>Input Monitoring</strong>, and <strong>Microphone</strong> to Terminal.</p>
+                            <h4>Install & Remove Quarantine</h4>
+                            <p class="text-secondary">Open the DMG, drag VocaMac to Applications, then remove the quarantine flag (required until we get code signing):</p>
+                            <div class="code-block">
+                                <code>xattr -cr /Applications/VocaMac.app</code>
+                            </div>
                         </div>
                     </div>
                     <div class="install__step">
                         <div class="install__step-num">3</div>
                         <div>
-                            <h4>Launch & Dictate</h4>
-                            <div class="code-block">
-                                <code>vocamac &</code>
-                            </div>
-                            <p class="text-secondary" style="margin-top: 8px;">Hold <strong>Right Option (⌥)</strong> → speak → release. Text appears at your cursor.</p>
+                            <h4>Grant Permissions & Dictate</h4>
+                            <p class="text-secondary">Open VocaMac, grant <strong>Microphone</strong>, <strong>Accessibility</strong>, and <strong>Input Monitoring</strong> permissions. Restart VocaMac after granting Input Monitoring.</p>
+                            <p class="text-secondary" style="margin-top: 8px;">Hold <strong>Right Option (⌥)</strong> → speak → release. Text appears at your cursor. ✨</p>
                         </div>
                     </div>
                 </div>
@@ -457,7 +467,43 @@
                     <h4>Requirements</h4>
                     <ul>
                         <li>macOS 13 (Ventura) or later</li>
-                        <li>Xcode 15+ or Swift 5.9+ toolchain</li>
+                        <li>Apple Silicon (M1/M2/M3/M4)</li>
+                        <li>8 GB RAM (16 GB+ recommended)</li>
+                        <li>Microphone</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Source Option -->
+            <div class="install__card install__panel" data-panel="source">
+                <div class="install__steps">
+                    <div class="install__step">
+                        <div class="install__step-num">1</div>
+                        <div>
+                            <h4>Clone & Install</h4>
+                            <div class="code-block">
+                                <code>git clone https://github.com/jatinkrmalik/vocamac.git
+cd vocamac
+make install</code>
+                            </div>
+                            <p class="text-secondary" style="margin-top: 8px;">This builds VocaMac, installs it to <strong>/Applications</strong>, and launches it.</p>
+                        </div>
+                    </div>
+                    <div class="install__step">
+                        <div class="install__step-num">2</div>
+                        <div>
+                            <h4>Grant Permissions & Dictate</h4>
+                            <p class="text-secondary">Grant <strong>Microphone</strong>, <strong>Accessibility</strong>, and <strong>Input Monitoring</strong> permissions. Restart VocaMac after granting Input Monitoring.</p>
+                            <p class="text-secondary" style="margin-top: 8px;">Hold <strong>Right Option (⌥)</strong> → speak → release. Text appears at your cursor. ✨</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="install__requirements">
+                    <h4>Requirements</h4>
+                    <ul>
+                        <li>macOS 13 (Ventura) or later</li>
+                        <li>Apple Silicon (M1/M2/M3/M4)</li>
+                        <li>Xcode 15+ or Swift 5.9+</li>
                         <li>8 GB RAM (16 GB+ recommended)</li>
                         <li>Microphone</li>
                     </ul>
@@ -646,6 +692,24 @@
 
         document.querySelectorAll('.feature-card, .step, .privacy__point, .model-card, .family-card, .faq__item, .install__step').forEach(el => {
             observer.observe(el);
+        });
+
+        // ========== Install Tabs ==========
+        document.querySelectorAll('.install__tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                const target = this.dataset.tab;
+                // Toggle active tab
+                document.querySelectorAll('.install__tab').forEach(t => t.classList.remove('install__tab--active'));
+                this.classList.add('install__tab--active');
+                // Toggle active panel
+                document.querySelectorAll('.install__panel').forEach(p => p.classList.remove('install__panel--active'));
+                document.querySelector(`.install__panel[data-panel="${target}"]`)?.classList.add('install__panel--active');
+                // Re-trigger animations for new panel steps
+                document.querySelectorAll(`.install__panel[data-panel="${target}"] .install__step`).forEach(step => {
+                    step.classList.remove('visible');
+                    observer.observe(step);
+                });
+            });
         });
     </script>
 </body>

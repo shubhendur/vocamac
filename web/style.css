@@ -515,6 +515,32 @@ section { padding: 100px 0; }
 
 /* ========== Install ========== */
 .install { background: var(--bg-secondary); }
+.install__tabs {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 24px;
+}
+.install__tab {
+    padding: 10px 24px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.install__tab:hover { border-color: var(--border-hover); color: var(--text-primary); }
+.install__tab--active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+    font-weight: 600;
+}
+.install__panel { display: none; }
+.install__panel--active { display: grid; }
 .install__card {
     display: grid;
     grid-template-columns: 2fr 1fr;
@@ -557,8 +583,16 @@ section { padding: 100px 0; }
     font-size: 13px;
     color: var(--green);
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     line-height: 1.8;
     margin-top: 8px;
+    max-width: 100%;
+    word-break: break-all;
+    white-space: pre-wrap;
+}
+.code-block code {
+    white-space: pre-wrap;
+    word-break: break-all;
 }
 .install__requirements { padding: 24px; background: var(--card-bg); border-radius: var(--radius-md); border: 1px solid var(--border-color); height: fit-content; }
 .install__requirements h4 { margin-bottom: 16px; }
@@ -701,6 +735,10 @@ section { padding: 100px 0; }
     .comparison-row div { padding: 8px 10px; }
     .footer__container { flex-direction: column; gap: 16px; text-align: center; }
     .install__card { padding: 24px; }
+    .install__tabs { flex-direction: column; align-items: stretch; }
+    .install__tab { text-align: center; }
+    .install__step { flex-direction: column; gap: 12px; }
+    .code-block { padding: 12px; font-size: 12px; }
 }
 
 @media (max-width: 480px) {
