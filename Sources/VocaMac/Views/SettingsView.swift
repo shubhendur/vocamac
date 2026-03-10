@@ -2,7 +2,7 @@
 // VocaMac
 //
 // Settings window for VocaMac configuration.
-// Organized into tabs: General, Models, Audio, About.
+// Organized into tabs: General, Models, Audio, Debug, About.
 
 import SwiftUI
 
@@ -22,6 +22,11 @@ struct SettingsView: View {
             AudioSettingsTab()
                 .tabItem {
                     Label("Audio", systemImage: "waveform")
+                }
+
+            DebugTab()
+                .tabItem {
+                    Label("Debug", systemImage: "ladybug")
                 }
 
             AboutTab()
@@ -147,43 +152,8 @@ struct GeneralSettingsTab: View {
                     .foregroundStyle(.secondary)
             }
 
-            // Permissions
-            Section("Permissions") {
-                PermissionRow(
-                    name: "Microphone",
-                    icon: "mic.fill",
-                    status: appState.micPermission,
-                    action: { appState.requestMicrophonePermission() }
-                )
-
-                PermissionRow(
-                    name: "Accessibility",
-                    icon: "accessibility",
-                    status: appState.accessibilityPermission,
-                    action: { appState.requestAccessibilityPermission() }
-                )
-
-                PermissionRow(
-                    name: "Input Monitoring",
-                    icon: "keyboard",
-                    status: appState.inputMonitoringPermission,
-                    action: { appState.requestInputMonitoringPermission() }
-                )
-
-                if appState.micPermission == .denied || appState.accessibilityPermission == .denied || appState.inputMonitoringPermission == .denied {
-                    Text("Denied permissions must be enabled manually in System Settings → Privacy & Security.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Button("Re-check Permissions") {
-                    appState.checkPermissions()
-                }
-                .controlSize(.small)
-            }
         }
         .formStyle(.grouped)
-        .padding(.horizontal)
     }
 }
 
@@ -615,7 +585,6 @@ struct AudioSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .padding(.horizontal)
         .onAppear {
             audioDevices = AudioEngine.availableInputDevices()
         }
@@ -632,7 +601,6 @@ struct AudioSettingsTab: View {
 
 struct AboutTab: View {
     @EnvironmentObject var appState: AppState
-    @State private var showingExportSuccess = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -695,31 +663,6 @@ struct AboutTab: View {
             }
             .font(.caption)
 
-            Divider()
-                .frame(width: 200)
-
-            // Debug logs section
-            VStack(spacing: 8) {
-                Text("Debug Logs")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-
-                HStack(spacing: 8) {
-                    Button(action: copyDebugLogs) {
-                        Label("Copy", systemImage: "doc.on.clipboard")
-                            .font(.caption)
-                    }
-                    .help("Copy last 500 lines of logs to clipboard")
-
-                    Button(action: exportDebugLogs) {
-                        Label("Export", systemImage: "arrow.down.doc")
-                            .font(.caption)
-                    }
-                    .help("Save debug logs to file and reveal in Finder")
-                }
-            }
-
             Spacer()
 
             HStack(spacing: 0) {
@@ -734,6 +677,71 @@ struct AboutTab: View {
         .frame(maxWidth: .infinity)
         .padding()
     }
+}
+
+// MARK: - Debug Tab
+
+struct DebugTab: View {
+    @EnvironmentObject var appState: AppState
+
+    var body: some View {
+        Form {
+            // Permissions
+            Section("Permissions") {
+                PermissionRow(
+                    name: "Microphone",
+                    icon: "mic.fill",
+                    status: appState.micPermission,
+                    action: { appState.requestMicrophonePermission() }
+                )
+
+                PermissionRow(
+                    name: "Accessibility",
+                    icon: "accessibility",
+                    status: appState.accessibilityPermission,
+                    action: { appState.requestAccessibilityPermission() }
+                )
+
+                PermissionRow(
+                    name: "Input Monitoring",
+                    icon: "keyboard",
+                    status: appState.inputMonitoringPermission,
+                    action: { appState.requestInputMonitoringPermission() }
+                )
+
+                if appState.micPermission == .denied || appState.accessibilityPermission == .denied || appState.inputMonitoringPermission == .denied {
+                    Text("Denied permissions must be enabled manually in System Settings → Privacy & Security.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Button("Re-check Permissions") {
+                    appState.checkPermissions()
+                }
+                .controlSize(.small)
+            }
+
+            // Debug Logs
+            Section("Debug Logs") {
+                HStack(spacing: 8) {
+                    Button(action: copyDebugLogs) {
+                        Label("Copy", systemImage: "doc.on.clipboard")
+                    }
+                    .help("Copy last 500 lines of logs to clipboard")
+
+                    Button(action: exportDebugLogs) {
+                        Label("Export", systemImage: "arrow.down.doc")
+                    }
+                    .help("Save debug logs to file and reveal in Finder")
+                }
+
+                Text("Copy or export recent application logs for troubleshooting.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
 
     // MARK: - Debug Log Actions
 
@@ -747,7 +755,6 @@ struct AboutTab: View {
     private func exportDebugLogs() {
         let logs = VocaLogger.exportLogs(lastLines: 1000)
 
-        // Create save panel
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.plainText]
         savePanel.nameFieldStringValue = "VocaMac-Debug-\(ISO8601DateFormatter().string(from: Date()).prefix(19)).log"

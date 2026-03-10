@@ -243,7 +243,7 @@ VocaMacApp (SwiftUI MenuBarExtra)
 ├── SoundManager      - Audio feedback (start/stop recording cues)
 ├── TextInjector      - Clipboard + Cmd+V text injection
 ├── MenuBarView       - Status popover UI
-└── SettingsView      - Configuration tabs (General, Models, Audio, About)
+└── SettingsView      - Configuration tabs (General, Models, Audio, Debug, About)
 ```
 
 For detailed documentation, see:
@@ -270,7 +270,7 @@ VocaMac/
 │       │   └── VocaMacApp.swift    # Entry point, MenuBarExtra
 │       ├── Views/
 │       │   ├── MenuBarView.swift   # Menu bar popover
-│       │   └── SettingsView.swift  # Settings window (4 tabs)
+│       │   └── SettingsView.swift  # Settings window (5 tabs)
 │       ├── Services/
 │       │   ├── AudioEngine.swift   # AVAudioEngine mic capture
 │       │   ├── HotKeyManager.swift # CGEventTap global hotkeys
@@ -323,6 +323,22 @@ Use `--keep-build` to preserve build artifacts:
 
 ```bash
 ./scripts/uninstall.sh --keep-build
+```
+
+### Troubleshooting
+
+**Reset onboarding:** To re-trigger the first-launch onboarding wizard (e.g., after an upgrade or for testing), reset the onboarding flag:
+
+```bash
+defaults delete com.vocamac.app vocamac.hasCompletedOnboarding
+```
+
+Then relaunch VocaMac. This only clears the onboarding state — all other preferences (hotkey, language, model) are preserved.
+
+**Reset all preferences:** To start completely fresh:
+
+```bash
+defaults delete com.vocamac.app
 ```
 
 ---
