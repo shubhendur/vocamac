@@ -337,6 +337,26 @@ struct MenuBarView: View {
             .buttonStyle(MenuRowButtonStyle())
 
             Button {
+                NotificationCenter.default.post(name: .showOnboarding, object: nil)
+            } label: {
+                HStack {
+                    Image(systemName: "wand.and.stars")
+                    Text("Setup Wizard")
+                    Spacer()
+                }
+                .font(.body)
+                .padding(.vertical, 6)
+                .padding(.horizontal, 8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.primary.opacity(0.0001))
+                )
+            }
+            .buttonStyle(MenuRowButtonStyle())
+
+            Button {
                 NSApplication.shared.terminate(nil)
             } label: {
                 HStack {
