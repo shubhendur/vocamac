@@ -168,7 +168,7 @@ final class WhisperModelInfoTests: XCTestCase {
             isActive: false, isSupported: true
         )
         model.isLoading = true
-        XCTAssertEqual(model.statusDescription, "Loading...")
+        XCTAssertEqual(model.statusDescription, "Loading…")
         XCTAssertEqual(model.statusIconName, "arrow.trianglehead.2.clockwise")
     }
 
