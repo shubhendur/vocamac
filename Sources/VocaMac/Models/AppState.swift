@@ -404,12 +404,26 @@ final class AppState: ObservableObject {
         // Mark the model as loading
         if let size = size, let idx = availableModels.firstIndex(where: { $0.size == size }) {
             availableModels[idx].isLoading = true
+            availableModels[idx].loadingStatus = "Preparing…"
         }
 
         do {
             // If model is downloaded locally, use the local folder
             let folder = size.flatMap { modelManager.modelFolder(for: $0) }
-            try await whisperService.loadModel(name: modelName, folder: folder)
+
+            // Update status: unpacking
+            if let size = size, let idx = availableModels.firstIndex(where: { $0.size == size }) {
+                availableModels[idx].loadingStatus = "Unpacking model…"
+            }
+
+            // Load model with status callback
+            try await whisperService.loadModel(name: modelName, folder: folder) { [weak self] phase in
+                Task { @MainActor in
+                    guard let self = self, let size = size,
+                          let idx = self.availableModels.firstIndex(where: { $0.size == size }) else { return }
+                    self.availableModels[idx].loadingStatus = phase
+                }
+            }
 
             if let size = size {
                 selectedModelSize = size.rawValue
@@ -499,9 +513,15 @@ final class AppState: ObservableObject {
             requestMicrophonePermission()
         }
 
-        // 3. Load model — let WhisperKit auto-select and download the best model
-        VocaLogger.info(.appState, "Loading WhisperKit model (auto-select)...")
-        await loadModel()
+        // 3. Load the user's preferred model (or auto-select on first launch)
+        if let preferredSize = ModelSize(rawValue: selectedModelSize),
+           modelManager.isModelDownloaded(preferredSize) {
+            VocaLogger.info(.appState, "Loading preferred model: \(preferredSize.displayName)...")
+            await loadModel(preferredSize)
+        } else {
+            VocaLogger.info(.appState, "Loading WhisperKit model (auto-select)...")
+            await loadModel()
+        }
         NSLog("[AppState] Model loaded: %@", whisperService.loadedModelName ?? "none")
 
         // 4. Always attempt to start hotkey listener

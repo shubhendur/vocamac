@@ -57,16 +57,23 @@ final class SettingsWindowManager: ObservableObject {
 }
 
 /// Manages the onboarding window
+@MainActor
 final class OnboardingWindowManager: ObservableObject {
     private var onboardingWindow: NSWindow?
     var onCompletion: (() -> Void)?
 
-    func open(appState: AppState) {
+    func open(appState: AppState, force: Bool = false) {
         // If window already exists, just bring it to front
         if let window = onboardingWindow, window.isVisible {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
+        }
+
+        // When manually re-triggered, reset completion flag so the
+        // monitor doesn't immediately close the window
+        if force {
+            appState.hasCompletedOnboarding = false
         }
 
         // Create the onboarding view
@@ -75,7 +82,7 @@ final class OnboardingWindowManager: ObservableObject {
 
         // Create a new window
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 600, height: 550),
+            contentRect: NSRect(x: 0, y: 0, width: 600, height: 580),
             styleMask: [.titled, .closable],
             backing: .buffered,
             defer: false
@@ -150,6 +157,22 @@ struct VocaMacApp: App {
         // For direct binary execution, we set it programmatically.
         DispatchQueue.main.async {
             NSApp?.setActivationPolicy(.accessory)
+        }
+
+        // Listen for "Show Setup Wizard" requests from Settings / Menu Bar
+        NotificationCenter.default.addObserver(
+            forName: .showOnboarding,
+            object: nil,
+            queue: .main
+        ) { [self] _ in
+            self.onboardingManager.open(appState: self.appState, force: true)
+        }
+
+        // Show onboarding on first launch
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [self] in
+            if !self.appState.hasCompletedOnboarding {
+                self.onboardingManager.open(appState: self.appState)
+            }
         }
     }
 

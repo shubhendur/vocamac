@@ -2,9 +2,13 @@
 // VocaMac
 //
 // Settings window for VocaMac configuration.
-// Organized into tabs: General, Models, Audio, About.
+// Organized into tabs: General, Models, Audio, Debug, About.
 
 import SwiftUI
+
+extension Notification.Name {
+    static let showOnboarding = Notification.Name("com.vocamac.showOnboarding")
+}
 
 struct SettingsView: View {
     var body: some View {
@@ -22,6 +26,11 @@ struct SettingsView: View {
             AudioSettingsTab()
                 .tabItem {
                     Label("Audio", systemImage: "waveform")
+                }
+
+            DebugTab()
+                .tabItem {
+                    Label("Debug", systemImage: "ladybug")
                 }
 
             AboutTab()
@@ -147,43 +156,8 @@ struct GeneralSettingsTab: View {
                     .foregroundStyle(.secondary)
             }
 
-            // Permissions
-            Section("Permissions") {
-                PermissionRow(
-                    name: "Microphone",
-                    icon: "mic.fill",
-                    status: appState.micPermission,
-                    action: { appState.requestMicrophonePermission() }
-                )
-
-                PermissionRow(
-                    name: "Accessibility",
-                    icon: "accessibility",
-                    status: appState.accessibilityPermission,
-                    action: { appState.requestAccessibilityPermission() }
-                )
-
-                PermissionRow(
-                    name: "Input Monitoring",
-                    icon: "keyboard",
-                    status: appState.inputMonitoringPermission,
-                    action: { appState.requestInputMonitoringPermission() }
-                )
-
-                if appState.micPermission == .denied || appState.accessibilityPermission == .denied || appState.inputMonitoringPermission == .denied {
-                    Text("Denied permissions must be enabled manually in System Settings → Privacy & Security.")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-
-                Button("Re-check Permissions") {
-                    appState.checkPermissions()
-                }
-                .controlSize(.small)
-            }
         }
         .formStyle(.grouped)
-        .padding(.horizontal)
     }
 }
 
@@ -261,25 +235,6 @@ struct ModelSettingsTab: View {
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
 
-                            if let recommended = appState.deviceRecommendedModel {
-                                HStack {
-                                    Image(systemName: "sparkles")
-                                        .foregroundStyle(.blue)
-                                    Text("WhisperKit recommends: **\(recommended)**")
-                                        .font(.callout)
-                                }
-                                .padding(.top, 4)
-                            }
-
-                            // Disk usage
-                            HStack {
-                                Image(systemName: "internaldrive")
-                                    .foregroundStyle(.secondary)
-                                Text("Model storage: \(appState.modelManager.diskUsageDescription())")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                            .padding(.top, 2)
                         }
                         .padding(4)
                     }
@@ -369,6 +324,23 @@ struct ModelSettingsTab: View {
                     Image(systemName: "info.circle")
                         .foregroundStyle(.secondary)
                     Text("Models are downloaded from HuggingFace and cached locally. Larger models produce better results but are slower and use more memory.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                if let recommended = appState.deviceRecommendedModel {
+                    HStack {
+                        Image(systemName: "sparkles")
+                            .foregroundStyle(.blue)
+                        Text("WhisperKit recommends: **\(recommended)**")
+                            .font(.callout)
+                    }
+                }
+
+                HStack {
+                    Image(systemName: "internaldrive")
+                        .foregroundStyle(.secondary)
+                    Text("Model storage: \(appState.modelManager.diskUsageDescription())")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -471,7 +443,7 @@ struct ModelRow: View {
                     ProgressView()
                         .frame(width: 60)
                         .controlSize(.small)
-                    Text("Loading...")
+                    Text(model.loadingStatus)
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -615,7 +587,6 @@ struct AudioSettingsTab: View {
             }
         }
         .formStyle(.grouped)
-        .padding(.horizontal)
         .onAppear {
             audioDevices = AudioEngine.availableInputDevices()
         }
@@ -632,7 +603,6 @@ struct AudioSettingsTab: View {
 
 struct AboutTab: View {
     @EnvironmentObject var appState: AppState
-    @State private var showingExportSuccess = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -698,27 +668,15 @@ struct AboutTab: View {
             Divider()
                 .frame(width: 200)
 
-            // Debug logs section
-            VStack(spacing: 8) {
-                Text("Debug Logs")
+            Button(action: {
+                NotificationCenter.default.post(name: .showOnboarding, object: nil)
+            }) {
+                Label("Show Setup Wizard…", systemImage: "wand.and.stars")
                     .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.secondary)
-
-                HStack(spacing: 8) {
-                    Button(action: copyDebugLogs) {
-                        Label("Copy", systemImage: "doc.on.clipboard")
-                            .font(.caption)
-                    }
-                    .help("Copy last 500 lines of logs to clipboard")
-
-                    Button(action: exportDebugLogs) {
-                        Label("Export", systemImage: "arrow.down.doc")
-                            .font(.caption)
-                    }
-                    .help("Save debug logs to file and reveal in Finder")
-                }
             }
+            .buttonStyle(.plain)
+            .foregroundStyle(.blue)
+            .help("Re-run the first-launch setup wizard")
 
             Spacer()
 
@@ -734,6 +692,180 @@ struct AboutTab: View {
         .frame(maxWidth: .infinity)
         .padding()
     }
+}
+
+// MARK: - Debug Tab
+
+struct DebugTab: View {
+    @EnvironmentObject var appState: AppState
+    @State private var logEntryCount: Int = VocaLogger.logEntryCount
+
+    var body: some View {
+        Form {
+            // Permissions
+            Section("Permissions") {
+                PermissionRow(
+                    name: "Microphone",
+                    icon: "mic.fill",
+                    status: appState.micPermission,
+                    action: { appState.requestMicrophonePermission() }
+                )
+
+                PermissionRow(
+                    name: "Accessibility",
+                    icon: "accessibility",
+                    status: appState.accessibilityPermission,
+                    action: { appState.requestAccessibilityPermission() }
+                )
+
+                PermissionRow(
+                    name: "Input Monitoring",
+                    icon: "keyboard",
+                    status: appState.inputMonitoringPermission,
+                    action: { appState.requestInputMonitoringPermission() }
+                )
+
+                if appState.micPermission == .denied || appState.accessibilityPermission == .denied || appState.inputMonitoringPermission == .denied {
+                    Text("Denied permissions must be enabled manually in System Settings → Privacy & Security.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack {
+                    Button("Re-check Permissions") {
+                        appState.checkPermissions()
+                    }
+                    .controlSize(.small)
+
+                    Spacer()
+
+                    Button(action: resetPermissions) {
+                        Label("Reset All Permissions", systemImage: "arrow.counterclockwise")
+                            .foregroundStyle(.red)
+                    }
+                    .controlSize(.small)
+                    .help("Reset all TCC permissions for VocaMac. The app will quit and you'll need to re-grant permissions on next launch.")
+                }
+
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.yellow)
+                        .font(.caption)
+                    Text("**Upgrading?** After updating VocaMac, you must remove the old entry (using \"−\") from Accessibility and Input Monitoring in System Settings → Privacy & Security, then re-add the new version. Permissions don't carry over because the app is not signed with a Developer ID.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            // Debug Logs
+            Section("Debug Logs") {
+                LabeledContent("Log File") {
+                    Text(VocaLogger.logFileURL().lastPathComponent)
+                        .foregroundStyle(.secondary)
+                }
+
+                LabeledContent("Log Entries") {
+                    Text("\(logEntryCount)")
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+
+                HStack {
+                    Button(action: copyDebugLogs) {
+                        Label("Copy to Clipboard", systemImage: "doc.on.clipboard")
+                    }
+                    .help("Copy last 500 lines of logs to clipboard")
+
+                    Spacer()
+
+                    Button(action: exportDebugLogs) {
+                        Label("Export to File…", systemImage: "square.and.arrow.up")
+                    }
+                    .help("Save debug logs to file and reveal in Finder")
+
+                    Spacer()
+
+                    Button(action: {
+                        VocaLogger.clearLogs()
+                        logEntryCount = VocaLogger.logEntryCount
+                    }) {
+                        Label("Clear", systemImage: "trash")
+                            .foregroundStyle(.red)
+                    }
+                    .help("Clear all log entries")
+                }
+
+                Text("Copy or export recent application logs for troubleshooting.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            // Application
+            Section("Application") {
+                HStack {
+                    Button(action: restartApp) {
+                        Label("Restart VocaMac", systemImage: "arrow.trianglehead.clockwise")
+                    }
+                    .help("Quit and relaunch VocaMac")
+
+                    Spacer()
+
+                    Button(role: .destructive, action: {
+                        NSApplication.shared.terminate(nil)
+                    }) {
+                        Label("Quit VocaMac", systemImage: "power")
+                    }
+                    .help("Quit VocaMac")
+                }
+
+                Text("Restart can help resolve issues with permissions or audio devices.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .formStyle(.grouped)
+    }
+
+    // MARK: - Actions
+
+    private func resetPermissions() {
+        let alert = NSAlert()
+        alert.messageText = "Reset All Permissions?"
+        alert.informativeText = "This will clear all permission grants (Microphone, Accessibility, Input Monitoring) for VocaMac. The app will quit and you'll need to re-grant permissions on next launch.\n\nThis is useful when permissions appear stuck or aren't being recognized after an update."
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "Reset & Quit")
+        alert.addButton(withTitle: "Cancel")
+
+        let response = alert.runModal()
+        if response == .alertFirstButtonReturn {
+            // Run tccutil to reset all TCC permissions for this app
+            let task = Process()
+            task.executableURL = URL(fileURLWithPath: "/usr/bin/tccutil")
+            task.arguments = ["reset", "All", "com.vocamac.app"]
+            try? task.run()
+            task.waitUntilExit()
+
+            VocaLogger.info(.general, "TCC permissions reset via tccutil")
+
+            // Quit the app so permissions take effect on next launch
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                NSApplication.shared.terminate(nil)
+            }
+        }
+    }
+
+    private func restartApp() {
+        let bundlePath = Bundle.main.bundlePath
+        let task = Process()
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        task.arguments = ["-n", bundlePath, "--args", "--restarted"]
+        try? task.run()
+
+        // Give the new instance a moment to start
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            NSApplication.shared.terminate(nil)
+        }
+    }
 
     // MARK: - Debug Log Actions
 
@@ -747,7 +879,6 @@ struct AboutTab: View {
     private func exportDebugLogs() {
         let logs = VocaLogger.exportLogs(lastLines: 1000)
 
-        // Create save panel
         let savePanel = NSSavePanel()
         savePanel.allowedContentTypes = [.plainText]
         savePanel.nameFieldStringValue = "VocaMac-Debug-\(ISO8601DateFormatter().string(from: Date()).prefix(19)).log"

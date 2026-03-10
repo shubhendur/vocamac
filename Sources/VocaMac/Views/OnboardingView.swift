@@ -12,10 +12,9 @@ import SwiftUI
 enum OnboardingStep: Int, CaseIterable, Identifiable {
     case welcome = 0
     case permissions = 1
-    case modelSelection = 2
-    case hotkeyConfig = 3
-    case quickTest = 4
-    case complete = 5
+    case hotkeyConfig = 2
+    case quickTest = 3
+    case complete = 4
 
     var id: Int { rawValue }
 
@@ -23,7 +22,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable {
         switch self {
         case .welcome: return "Welcome to VocaMac"
         case .permissions: return "Grant Permissions"
-        case .modelSelection: return "Choose Your Model"
         case .hotkeyConfig: return "Configure Hotkey"
         case .quickTest: return "Quick Test"
         case .complete: return "All Set!"
@@ -31,7 +29,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable {
     }
 
     var stepNumber: String {
-        "Step \(rawValue + 1) of 6"
+        "Step \(rawValue + 1) of \(OnboardingStep.allCases.count)"
     }
 }
 
@@ -66,22 +64,23 @@ struct OnboardingView: View {
                 .padding()
                 .borderBottom()
 
-                // Step content
-                Group {
-                    switch currentStep {
-                    case .welcome:
-                        WelcomeStep()
-                    case .permissions:
-                        PermissionsStep()
-                    case .modelSelection:
-                        ModelSelectionStep()
-                    case .hotkeyConfig:
-                        HotkeyConfigStep()
-                    case .quickTest:
-                        QuickTestStep()
-                    case .complete:
-                        CompleteStep()
+                // Step content (scrollable to handle varying content heights)
+                ScrollView {
+                    Group {
+                        switch currentStep {
+                        case .welcome:
+                            WelcomeStep()
+                        case .permissions:
+                            PermissionsStep()
+                        case .hotkeyConfig:
+                            HotkeyConfigStep()
+                        case .quickTest:
+                            QuickTestStep()
+                        case .complete:
+                            CompleteStep()
+                        }
                     }
+                    .frame(maxWidth: .infinity)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -92,7 +91,14 @@ struct OnboardingView: View {
                     if currentStep != .welcome {
                         Button(action: goToPreviousStep) {
                             Text("Back")
+                                .font(.body)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.gray.opacity(0.2))
+                                .foregroundStyle(.primary)
+                                .cornerRadius(8)
                         }
+                        .buttonStyle(.plain)
                         .keyboardShortcut(.cancelAction)
                     }
 
@@ -101,12 +107,28 @@ struct OnboardingView: View {
                     if currentStep != .complete {
                         Button(action: goToNextStep) {
                             Text(currentStep == .quickTest ? "Finish" : "Continue")
+                                .font(.body)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 8)
+                                .background(Color.blue)
+                                .foregroundStyle(.white)
+                                .cornerRadius(8)
                         }
+                        .buttonStyle(.plain)
                         .keyboardShortcut(.defaultAction)
                     } else {
                         Button(action: completeOnboarding) {
                             Text("Start Using VocaMac")
+                                .font(.body)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 8)
+                                .background(Color.blue)
+                                .foregroundStyle(.white)
+                                .cornerRadius(8)
                         }
+                        .buttonStyle(.plain)
                         .keyboardShortcut(.defaultAction)
                     }
                 }
@@ -195,6 +217,12 @@ struct WelcomeStep: View {
 struct PermissionsStep: View {
     @EnvironmentObject var appState: AppState
 
+    private var allPermissionsGranted: Bool {
+        appState.micPermission == .granted &&
+        appState.accessibilityPermission == .granted &&
+        appState.inputMonitoringPermission == .granted
+    }
+
     var body: some View {
         VStack(spacing: 16) {
             Text("VocaMac needs a few permissions to work properly.")
@@ -232,6 +260,22 @@ struct PermissionsStep: View {
 
             Spacer()
 
+            if !allPermissionsGranted {
+                HStack(spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .font(.caption)
+                        .foregroundStyle(.yellow)
+                    Text("Some permissions are missing. VocaMac may not work correctly until all permissions are granted. You can set them later in Settings → Debug.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding()
+                .background(Color.yellow.opacity(0.05))
+                .cornerRadius(8)
+                .padding(.horizontal)
+            }
+
             HStack(spacing: 8) {
                 Image(systemName: "info.circle.fill")
                     .font(.caption)
@@ -244,7 +288,7 @@ struct PermissionsStep: View {
             .padding()
             .background(Color.blue.opacity(0.05))
             .cornerRadius(8)
-            .padding()
+            .padding(.horizontal)
 
             Spacer()
         }
@@ -295,6 +339,7 @@ struct OnboardingPermissionRow: View {
                             .foregroundStyle(.white)
                             .cornerRadius(6)
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -325,12 +370,13 @@ struct ModelSelectionStep: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
 
-            if let recommended = appState.systemCapabilities?.recommendedModel {
+            if let recommended = appState.deviceRecommendedModel,
+               let recommendedSize = ModelSize.allCases.first(where: { recommended.contains($0.rawValue) }) {
                 HStack(spacing: 12) {
                     Image(systemName: "lightbulb.fill")
                         .font(.caption)
                         .foregroundStyle(.orange)
-                    Text("We recommend: **\(recommended.displayName)**")
+                    Text("We recommend: **\(recommendedSize.displayName)**")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -343,7 +389,7 @@ struct ModelSelectionStep: View {
                     ForEach(appState.availableModels) { modelInfo in
                         ModelSelectionCard(
                             modelInfo: modelInfo,
-                            isRecommended: modelInfo.size == appState.systemCapabilities?.recommendedModel,
+                            isRecommended: appState.deviceRecommendedModel?.contains(modelInfo.size.rawValue) == true,
                             onSelect: {
                                 Task {
                                     await appState.loadModel(modelInfo.size)
@@ -437,6 +483,14 @@ struct ModelSelectionCard: View {
                             .font(.caption2)
                             .foregroundStyle(.secondary)
                     }
+                } else if modelInfo.isLoading {
+                    HStack(spacing: 8) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text(modelInfo.loadingStatus)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 } else if modelInfo.isDownloaded {
                     if modelInfo.isActive {
                         Label("Active", systemImage: "checkmark.circle.fill")
@@ -452,6 +506,7 @@ struct ModelSelectionCard: View {
                                 .foregroundStyle(.white)
                                 .cornerRadius(6)
                         }
+                        .buttonStyle(.plain)
                     }
                 } else if !modelInfo.isSupported {
                     Text("Not supported on this device")
@@ -470,6 +525,7 @@ struct ModelSelectionCard: View {
                         .foregroundStyle(.primary)
                         .cornerRadius(6)
                     }
+                    .buttonStyle(.plain)
                 }
 
                 Spacer()
@@ -721,7 +777,6 @@ struct CompleteStep: View {
                 if appState.inputMonitoringPermission == .granted {
                     SummaryItem(icon: "keyboard.fill", text: "Input monitoring enabled")
                 }
-                SummaryItem(icon: "brain", text: "Model: \(appState.currentModel?.size.displayName ?? "Selected")")
                 SummaryItem(icon: "keyboard", text: "Hotkey: \(KeyCodeReference.displayName(for: appState.hotKeyCode))")
             }
             .frame(maxWidth: .infinity, alignment: .leading)

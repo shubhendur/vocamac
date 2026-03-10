@@ -243,7 +243,7 @@ VocaMacApp (SwiftUI MenuBarExtra)
 ├── SoundManager      - Audio feedback (start/stop recording cues)
 ├── TextInjector      - Clipboard + Cmd+V text injection
 ├── MenuBarView       - Status popover UI
-└── SettingsView      - Configuration tabs (General, Models, Audio, About)
+└── SettingsView      - Configuration tabs (General, Models, Audio, Debug, About)
 ```
 
 For detailed documentation, see:
@@ -270,7 +270,7 @@ VocaMac/
 │       │   └── VocaMacApp.swift    # Entry point, MenuBarExtra
 │       ├── Views/
 │       │   ├── MenuBarView.swift   # Menu bar popover
-│       │   └── SettingsView.swift  # Settings window (4 tabs)
+│       │   └── SettingsView.swift  # Settings window (5 tabs)
 │       ├── Services/
 │       │   ├── AudioEngine.swift   # AVAudioEngine mic capture
 │       │   ├── HotKeyManager.swift # CGEventTap global hotkeys
@@ -325,6 +325,30 @@ Use `--keep-build` to preserve build artifacts:
 ./scripts/uninstall.sh --keep-build
 ```
 
+### Troubleshooting
+
+**Reset onboarding:** To re-trigger the first-launch onboarding wizard (e.g., after an upgrade or for testing), reset the onboarding flag:
+
+```bash
+defaults delete com.vocamac.app vocamac.hasCompletedOnboarding
+```
+
+Then relaunch VocaMac. This only clears the onboarding state — all other preferences (hotkey, language, model) are preserved.
+
+**Reset all preferences:** To start completely fresh:
+
+```bash
+defaults delete com.vocamac.app
+```
+
+**Reset permissions after updating:** When updating VocaMac to a newer version, it's recommended to reset permissions first so the new binary gets a clean grant. You can do this from **Settings → Debug → Reset All Permissions**, or manually via Terminal:
+
+```bash
+tccutil reset All com.vocamac.app
+```
+
+This clears all permission entries (Microphone, Accessibility, Input Monitoring) for VocaMac. On next launch, macOS will prompt you to re-grant them for the new version. This avoids stale permission entries that point to an old binary's CDHash.
+
 ---
 
 
@@ -352,9 +376,28 @@ Each platform uses native technologies for the best possible integration, while 
 
 ## ⚠️ Known Limitations
 
-- **Ad-hoc code signing** - Accessibility and Input Monitoring permissions reset on every rebuild. Re-grant them after each build.
-- **First launch requires internet** - WhisperKit downloads the speech recognition model on first run. All subsequent launches work fully offline.
-- **macOS only** - Requires macOS 13 (Ventura) or later.
+- **Permissions reset on rebuild** — Accessibility and Input Monitoring permissions reset on every rebuild (see below).
+- **First launch requires internet** — WhisperKit downloads the speech recognition model on first run. All subsequent launches work fully offline.
+- **macOS only** — Requires macOS 13 (Ventura) or later.
+
+### Why Do Permissions Reset on Every Rebuild?
+
+macOS tracks Accessibility and Input Monitoring permissions using the app's **CDHash** (a cryptographic hash of the code signature), not the bundle identifier. When you rebuild VocaMac with ad-hoc signing (`codesign --sign -`), the binary changes, producing a new CDHash — so macOS treats it as a completely new, untrusted app.
+
+This is **not a bug** — it's macOS security by design, preventing modified apps from inheriting sensitive permissions. All open-source macOS apps that use Accessibility (Rectangle, Maccy, AltTab, etc.) have the same limitation.
+
+**Why Microphone permission persists:** Microphone access uses AVFoundation's framework-level preference cache with relaxed verification, unlike the strict CDHash checks for Accessibility and Input Monitoring.
+
+**Workarounds:**
+
+| Approach | How | Permissions Persist |
+|---|---|---|
+| **Reset permissions on update** | Settings → Debug → Reset All Permissions (or `tccutil reset All com.vocamac.app`) | Recommended before each update |
+| **Re-grant manually** | System Settings → Privacy & Security after each rebuild | Per rebuild |
+| **Run from Terminal** | Grant permissions to Terminal.app once, then run `make run` or `.build/arm64-apple-macosx/release/VocaMac` | ✅ Always |
+| **Developer ID signing** | Requires Apple Developer Program ($99/year) — planned for future releases | ✅ Always |
+
+> **💡 Developer tip:** Add your Terminal app (Terminal.app or iTerm2) to both Accessibility and Input Monitoring in System Settings. Then run VocaMac directly from Terminal — permissions are inherited and never reset.
 
 ---
 
