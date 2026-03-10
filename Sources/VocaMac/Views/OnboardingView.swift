@@ -295,6 +295,7 @@ struct OnboardingPermissionRow: View {
                             .foregroundStyle(.white)
                             .cornerRadius(6)
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
@@ -325,12 +326,13 @@ struct ModelSelectionStep: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal)
 
-            if let recommended = appState.systemCapabilities?.recommendedModel {
+            if let recommended = appState.deviceRecommendedModel,
+               let recommendedSize = ModelSize.allCases.first(where: { recommended.contains($0.rawValue) }) {
                 HStack(spacing: 12) {
                     Image(systemName: "lightbulb.fill")
                         .font(.caption)
                         .foregroundStyle(.orange)
-                    Text("We recommend: **\(recommended.displayName)**")
+                    Text("We recommend: **\(recommendedSize.displayName)**")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                     Spacer()
@@ -343,7 +345,7 @@ struct ModelSelectionStep: View {
                     ForEach(appState.availableModels) { modelInfo in
                         ModelSelectionCard(
                             modelInfo: modelInfo,
-                            isRecommended: modelInfo.size == appState.systemCapabilities?.recommendedModel,
+                            isRecommended: appState.deviceRecommendedModel?.contains(modelInfo.size.rawValue) == true,
                             onSelect: {
                                 Task {
                                     await appState.loadModel(modelInfo.size)
@@ -452,6 +454,7 @@ struct ModelSelectionCard: View {
                                 .foregroundStyle(.white)
                                 .cornerRadius(6)
                         }
+                        .buttonStyle(.plain)
                     }
                 } else if !modelInfo.isSupported {
                     Text("Not supported on this device")
@@ -470,6 +473,7 @@ struct ModelSelectionCard: View {
                         .foregroundStyle(.primary)
                         .cornerRadius(6)
                     }
+                    .buttonStyle(.plain)
                 }
 
                 Spacer()
