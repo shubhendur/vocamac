@@ -12,10 +12,9 @@ import SwiftUI
 enum OnboardingStep: Int, CaseIterable, Identifiable {
     case welcome = 0
     case permissions = 1
-    case modelSelection = 2
-    case hotkeyConfig = 3
-    case quickTest = 4
-    case complete = 5
+    case hotkeyConfig = 2
+    case quickTest = 3
+    case complete = 4
 
     var id: Int { rawValue }
 
@@ -23,7 +22,6 @@ enum OnboardingStep: Int, CaseIterable, Identifiable {
         switch self {
         case .welcome: return "Welcome to VocaMac"
         case .permissions: return "Grant Permissions"
-        case .modelSelection: return "Choose Your Model"
         case .hotkeyConfig: return "Configure Hotkey"
         case .quickTest: return "Quick Test"
         case .complete: return "All Set!"
@@ -31,7 +29,7 @@ enum OnboardingStep: Int, CaseIterable, Identifiable {
     }
 
     var stepNumber: String {
-        "Step \(rawValue + 1) of 6"
+        "Step \(rawValue + 1) of \(OnboardingStep.allCases.count)"
     }
 }
 
@@ -74,8 +72,6 @@ struct OnboardingView: View {
                             WelcomeStep()
                         case .permissions:
                             PermissionsStep()
-                        case .modelSelection:
-                            ModelSelectionStep()
                         case .hotkeyConfig:
                             HotkeyConfigStep()
                         case .quickTest:
@@ -781,7 +777,6 @@ struct CompleteStep: View {
                 if appState.inputMonitoringPermission == .granted {
                     SummaryItem(icon: "keyboard.fill", text: "Input monitoring enabled")
                 }
-                SummaryItem(icon: "brain", text: "Model: \(appState.currentModel?.size.displayName ?? "Selected")")
                 SummaryItem(icon: "keyboard", text: "Hotkey: \(KeyCodeReference.displayName(for: appState.hotKeyCode))")
             }
             .frame(maxWidth: .infinity, alignment: .leading)
