@@ -41,10 +41,10 @@ final class TextInjector {
 
         // Check accessibility permission
         let trusted = AXIsProcessTrusted()
-        NSLog("[TextInjector] AXIsProcessTrusted = %@", trusted ? "YES" : "NO")
+        VocaLogger.debug(.textInjector, "AXIsProcessTrusted = \(trusted ? "YES" : "NO")")
 
         if !trusted {
-            NSLog("[TextInjector] No accessibility permission. Copying to clipboard only.")
+            VocaLogger.warning(.textInjector, "No accessibility permission. Copying to clipboard only.")
             let pasteboard = NSPasteboard.general
             pasteboard.clearContents()
             pasteboard.setString(text, forType: .string)
@@ -61,11 +61,11 @@ final class TextInjector {
         // Set transcribed text to clipboard
         pasteboard.clearContents()
         pasteboard.setString(text, forType: .string)
-        NSLog("[TextInjector] Set clipboard with %ld characters", text.count)
+        VocaLogger.debug(.textInjector, "Set clipboard: '\(String(text.prefix(80)))'")
 
         // Delay to let clipboard settle, then simulate Cmd+V
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [self] in
-            NSLog("[TextInjector] Simulating Cmd+V...")
+            VocaLogger.debug(.textInjector, "Simulating Cmd+V...")
             simulatePaste()
 
             // Restore clipboard after paste completes
@@ -77,7 +77,7 @@ final class TextInjector {
                         // Previous clipboard was empty; clear the transcribed text
                         pasteboard.clearContents()
                     }
-                    NSLog("[TextInjector] Clipboard restored")
+                    VocaLogger.debug(.textInjector, "Clipboard restored")
                 }
             }
         }
@@ -125,7 +125,7 @@ final class TextInjector {
         }
 
         pasteboard.writeObjects(newItems)
-        NSLog("[TextInjector] Restored clipboard with %ld items", newItems.count)
+        VocaLogger.debug(.textInjector, "Restored clipboard with \(newItems.count) items")
     }
 
     // MARK: - Paste Simulation
@@ -136,7 +136,7 @@ final class TextInjector {
 
         // Cmd+V key down
         guard let keyDown = CGEvent(keyboardEventSource: source, virtualKey: kVK_V, keyDown: true) else {
-            NSLog("[TextInjector] ERROR: Failed to create key down event")
+            VocaLogger.error(.textInjector, "ERROR: Failed to create key down event")
             return
         }
         keyDown.flags = [.maskCommand]
@@ -144,12 +144,12 @@ final class TextInjector {
 
         // Cmd+V key up
         guard let keyUp = CGEvent(keyboardEventSource: source, virtualKey: kVK_V, keyDown: false) else {
-            NSLog("[TextInjector] ERROR: Failed to create key up event")
+            VocaLogger.error(.textInjector, "ERROR: Failed to create key up event")
             return
         }
         keyUp.flags = [.maskCommand]
         keyUp.post(tap: .cgAnnotatedSessionEventTap)
 
-        NSLog("[TextInjector] Cmd+V posted")
+        VocaLogger.info(.textInjector, "Cmd+V posted")
     }
 }

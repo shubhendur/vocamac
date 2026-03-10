@@ -107,6 +107,7 @@ final class AppState: ObservableObject {
     @AppStorage("vocamac.soundEffectsEnabled") var soundEffectsEnabled: Bool = true
     @AppStorage("vocamac.showCursorIndicator") var showCursorIndicator: Bool = true
     @AppStorage("vocamac.translationEnabled") var translationEnabled: Bool = false
+    @AppStorage("vocamac.logLevel") var logLevel: String = "info"
 
     // MARK: - Services
 
@@ -125,7 +126,7 @@ final class AppState: ObservableObject {
     // MARK: - Initialization
 
     init() {
-        NSLog("[AppState] Initializing...")
+        VocaLogger.info(.appState, "Initializing...")
         setupServices()
         // Trigger startup automatically
         Task {
@@ -480,46 +481,43 @@ final class AppState: ObservableObject {
     // MARK: - Startup
 
     func performStartup() async {
-        NSLog("[AppState] performStartup beginning...")
+        VocaLogger.info(.appState, "performStartup beginning...")
 
         // 1. Detect hardware
         systemCapabilities = SystemInfo.detect()
-        NSLog("[AppState] System: %@ | %d GB RAM | %d cores",
-              systemCapabilities?.processorName ?? "unknown",
-              systemCapabilities?.physicalMemoryGB ?? 0,
-              systemCapabilities?.coreCount ?? 0)
+        let sysInfo = systemCapabilities
+        VocaLogger.info(.appState, "System: \(sysInfo?.processorName ?? "unknown") | \(sysInfo?.physicalMemoryGB ?? 0) GB RAM | \(sysInfo?.coreCount ?? 0) cores")
 
         // 2. Check/request permissions
         checkPermissions()
-        NSLog("[AppState] Mic permission: %@ | Accessibility: %@ | Input Monitoring: %@",
-              micPermission.rawValue, accessibilityPermission.rawValue, inputMonitoringPermission.rawValue)
+        VocaLogger.info(.appState, "Mic permission: \(micPermission.rawValue) | Accessibility: \(accessibilityPermission.rawValue) | Input Monitoring: \(inputMonitoringPermission.rawValue)")
 
         // Auto-prompt for microphone permission on first launch
         if micPermission == .notDetermined {
-            NSLog("[AppState] Mic permission not determined — requesting...")
+            VocaLogger.info(.appState, "Mic permission not determined — requesting...")
             requestMicrophonePermission()
         }
 
         // 3. Load model — let WhisperKit auto-select and download the best model
-        NSLog("[AppState] Loading WhisperKit model (auto-select)...")
+        VocaLogger.info(.appState, "Loading WhisperKit model (auto-select)...")
         await loadModel()
         NSLog("[AppState] Model loaded: %@", whisperService.loadedModelName ?? "none")
 
         // 4. Always attempt to start hotkey listener
         // The event tap creation itself will fail if permissions aren't granted,
         // and we handle that gracefully in HotKeyManager.
-        NSLog("[AppState] Attempting to start hotkey listener...")
+        VocaLogger.info(.appState, "Attempting to start hotkey listener...")
         hotKeyManager.startListening(
             keyCode: hotKeyCode,
             mode: activationMode,
             doubleTapThreshold: doubleTapThreshold
         )
         if hotKeyManager.isListening {
-            NSLog("[AppState] Hotkey listener active (keyCode=%d, mode=%@)", hotKeyCode, activationMode.rawValue)
+            VocaLogger.info(.appState, "Hotkey listener active (keyCode=\(hotKeyCode), mode=\(activationMode.rawValue))")
         } else {
-            NSLog("[AppState] WARNING: Hotkey listener failed to start. Check Accessibility & Input Monitoring permissions.")
+            VocaLogger.warning(.appState, "Hotkey listener failed to start. Check Accessibility & Input Monitoring permissions.")
         }
 
-        NSLog("[AppState] Startup complete!")
+        VocaLogger.info(.appState, "Startup complete!")
     }
 }

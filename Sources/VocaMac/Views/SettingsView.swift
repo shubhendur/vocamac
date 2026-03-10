@@ -632,6 +632,7 @@ struct AudioSettingsTab: View {
 
 struct AboutTab: View {
     @EnvironmentObject var appState: AppState
+    @State private var showingExportSuccess = false
 
     var body: some View {
         VStack(spacing: 16) {
@@ -694,6 +695,31 @@ struct AboutTab: View {
             }
             .font(.caption)
 
+            Divider()
+                .frame(width: 200)
+
+            // Debug logs section
+            VStack(spacing: 8) {
+                Text("Debug Logs")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 8) {
+                    Button(action: copyDebugLogs) {
+                        Label("Copy", systemImage: "doc.on.clipboard")
+                            .font(.caption)
+                    }
+                    .help("Copy last 500 lines of logs to clipboard")
+
+                    Button(action: exportDebugLogs) {
+                        Label("Export", systemImage: "arrow.down.doc")
+                            .font(.caption)
+                    }
+                    .help("Save debug logs to file and reveal in Finder")
+                }
+            }
+
             Spacer()
 
             HStack(spacing: 0) {
@@ -707,6 +733,36 @@ struct AboutTab: View {
         }
         .frame(maxWidth: .infinity)
         .padding()
+    }
+
+    // MARK: - Debug Log Actions
+
+    private func copyDebugLogs() {
+        let logs = VocaLogger.exportLogs(lastLines: 500)
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(logs, forType: .string)
+    }
+
+    private func exportDebugLogs() {
+        let logs = VocaLogger.exportLogs(lastLines: 1000)
+
+        // Create save panel
+        let savePanel = NSSavePanel()
+        savePanel.allowedContentTypes = [.plainText]
+        savePanel.nameFieldStringValue = "VocaMac-Debug-\(ISO8601DateFormatter().string(from: Date()).prefix(19)).log"
+        savePanel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+
+        savePanel.begin { response in
+            if response == .OK, let fileURL = savePanel.url {
+                do {
+                    try logs.write(to: fileURL, atomically: true, encoding: .utf8)
+                    NSWorkspace.shared.selectFile(fileURL.path, inFileViewerRootedAtPath: fileURL.deletingLastPathComponent().path)
+                } catch {
+                    VocaLogger.error(.general, "Failed to export logs: \(error)")
+                }
+            }
+        }
     }
 }
 
