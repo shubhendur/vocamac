@@ -72,7 +72,7 @@ final class HotKeyManager {
         doubleTapThreshold: Double = 0.4
     ) {
         guard !isListening else {
-            print("[HotKeyManager] Already listening")
+            VocaLogger.debug(.hotKeyManager, "Already listening")
             return
         }
 
@@ -101,7 +101,7 @@ final class HotKeyManager {
             callback: HotKeyManager.eventTapCallback,
             userInfo: userInfo
         ) else {
-            NSLog("[HotKeyManager] FAILED to create event tap! Check Accessibility & Input Monitoring permissions.")
+            VocaLogger.error(.hotKeyManager, "FAILED to create event tap! Check Accessibility & Input Monitoring permissions.")
             return
         }
 
@@ -114,7 +114,7 @@ final class HotKeyManager {
         CGEvent.tapEnable(tap: tap, enable: true)
 
         isListening = true
-        NSLog("[HotKeyManager] Event tap created successfully. Listening for keyCode %d in %@ mode", keyCode, mode.rawValue)
+        VocaLogger.info(.hotKeyManager, "Event tap created successfully. Listening for keyCode \(keyCode) in \(mode.rawValue) mode")
     }
 
     /// Stop listening for global hotkey events
@@ -135,7 +135,7 @@ final class HotKeyManager {
         isKeyHeld = false
         isToggled = false
 
-        print("[HotKeyManager] Stopped listening")
+        VocaLogger.info(.hotKeyManager, "Stopped listening")
     }
 
     /// Update the configuration while listening
@@ -180,7 +180,7 @@ final class HotKeyManager {
         // For regular keys, we use keyDown/keyUp events
         if type == .flagsChanged {
             if keyCode == targetKeyCode {
-                NSLog("[HotKeyManager] flagsChanged event for target keyCode %d", keyCode)
+                VocaLogger.debug(.hotKeyManager, "flagsChanged event for target keyCode \(keyCode)")
             }
             handleModifierKeyEvent(keyCode: keyCode, event: event)
         } else if type == .keyDown || type == .keyUp {
@@ -234,14 +234,14 @@ final class HotKeyManager {
     /// Process a key-down event for the target hotkey
     private func handleKeyDown() {
         let currentTime = CFAbsoluteTimeGetCurrent()
-        NSLog("[HotKeyManager] Key DOWN detected (mode=%@)", mode.rawValue)
+        VocaLogger.debug(.hotKeyManager, "Key DOWN detected (mode=\(mode.rawValue))")
 
         switch mode {
         case .pushToTalk:
             // Push-to-talk: start recording on key down (if not already held)
             if !isKeyHeld {
                 isKeyHeld = true
-                NSLog("[HotKeyManager] Push-to-talk: START recording")
+                VocaLogger.debug(.hotKeyManager, "Push-to-talk: START recording")
                 DispatchQueue.main.async { [weak self] in
                     self?.onRecordingStart?()
                 }
@@ -272,14 +272,14 @@ final class HotKeyManager {
 
     /// Process a key-up event for the target hotkey
     private func handleKeyUp() {
-        NSLog("[HotKeyManager] Key UP detected (mode=%@)", mode.rawValue)
+        VocaLogger.debug(.hotKeyManager, "Key UP detected (mode=\(mode.rawValue))")
 
         switch mode {
         case .pushToTalk:
             // Push-to-talk: stop recording on key release
             if isKeyHeld {
                 isKeyHeld = false
-                NSLog("[HotKeyManager] Push-to-talk: STOP recording")
+                VocaLogger.debug(.hotKeyManager, "Push-to-talk: STOP recording")
                 DispatchQueue.main.async { [weak self] in
                     self?.onRecordingStop?()
                 }

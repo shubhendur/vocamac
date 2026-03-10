@@ -64,7 +64,7 @@ final class WhisperService: @unchecked Sendable {
         unloadModel()
 
         let displayName = modelName ?? "auto-detect"
-        print("[WhisperService] Loading model: \(displayName)...")
+        VocaLogger.info(.whisperService, "Loading model: \(displayName)...")
         let startTime = CFAbsoluteTimeGetCurrent()
 
         do {
@@ -95,9 +95,9 @@ final class WhisperService: @unchecked Sendable {
             self.loadedModelName = modelName ?? kit.modelVariant.description
 
             let elapsed = CFAbsoluteTimeGetCurrent() - startTime
-            print("[WhisperService] Model loaded in \(String(format: "%.2f", elapsed))s")
+            VocaLogger.info(.whisperService, "Model loaded in \(String(format: "%.2f", elapsed))s")
         } catch {
-            print("[WhisperService] ERROR loading model: \(error)")
+            VocaLogger.error(.whisperService, "ERROR loading model: \(error)")
             throw WhisperError.initializationFailed(reason: error.localizedDescription)
         }
     }
@@ -107,7 +107,7 @@ final class WhisperService: @unchecked Sendable {
         if whisperKit != nil {
             whisperKit = nil
             loadedModelName = nil
-            print("[WhisperService] Model unloaded")
+            VocaLogger.info(.whisperService, "Model unloaded")
         }
     }
 
@@ -133,7 +133,7 @@ final class WhisperService: @unchecked Sendable {
         }
 
         let audioLengthSeconds = Double(audioData.count) / 16000.0
-        print("[WhisperService] Transcribing \(String(format: "%.1f", audioLengthSeconds))s of audio...")
+        VocaLogger.info(.whisperService, "Transcribing \(String(format: "%.1f", audioLengthSeconds))s of audio...")
 
         let startTime = CFAbsoluteTimeGetCurrent()
 
@@ -165,8 +165,8 @@ final class WhisperService: @unchecked Sendable {
 
             let modelUsed = modelSizeFromName(loadedModelName ?? "tiny")
 
-            print("[WhisperService] Transcription completed in \(String(format: "%.2f", elapsed))s")
-            print("[WhisperService] Transcribed \(fullText.count) characters")
+            VocaLogger.info(.whisperService, "Transcription completed in \(String(format: "%.2f", elapsed))s")
+            VocaLogger.info(.whisperService, "Result: \(fullText.prefix(100))...")
 
             return VocaTranscription(
                 text: fullText,

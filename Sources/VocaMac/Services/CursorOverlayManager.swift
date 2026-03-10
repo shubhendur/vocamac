@@ -73,14 +73,14 @@ final class CursorOverlayManager {
         }
 
         viewModel.isActive = true
-        NSLog("[CursorOverlay] Indicator shown (recording)")
+        VocaLogger.debug(.cursorOverlay, "Indicator shown (recording)")
     }
 
     /// Transition the indicator from recording (red) to processing (purple)
     /// Keeps the overlay visible so the user knows text is on its way.
     func transitionToProcessing() {
         viewModel.phase = .processing
-        NSLog("[CursorOverlay] Transitioned to processing")
+        VocaLogger.debug(.cursorOverlay, "Transitioned to processing")
     }
 
     /// Hide the recording indicator
@@ -92,7 +92,7 @@ final class CursorOverlayManager {
         overlayPanel?.orderOut(nil)
         overlayPanel = nil
         hostingView = nil
-        NSLog("[CursorOverlay] Indicator hidden")
+        VocaLogger.debug(.cursorOverlay, "Indicator hidden")
     }
 
     /// Update the audio level (kept for future use)

@@ -60,7 +60,7 @@ final class SoundManager: NSObject, NSSoundDelegate, @unchecked Sendable {
     private func playSystemSound(_ name: String) {
         let soundPath = "/System/Library/Sounds/\(name).aiff"
         guard let sound = NSSound(contentsOfFile: soundPath, byReference: true) else {
-            NSLog("[SoundManager] Could not load system sound: %@", name)
+            VocaLogger.warning(.soundManager, "Could not load system sound: \(name)")
             return
         }
         sound.volume = volume

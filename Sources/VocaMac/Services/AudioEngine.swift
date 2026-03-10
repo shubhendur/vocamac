@@ -108,7 +108,7 @@ final class AudioEngine {
         do {
             try engine.start()
         } catch {
-            print("[AudioEngine] Failed to start audio engine: \(error)")
+            VocaLogger.error(.audioEngine, "Failed to start audio engine: \(error)")
             isCurrentlyRecording = false
         }
     }
@@ -200,7 +200,7 @@ final class AudioEngine {
 
         // Create a converter
         guard let converter = AVAudioConverter(from: inputFormat, to: whisperFormat) else {
-            print("[AudioEngine] Failed to create audio format converter")
+            VocaLogger.error(.audioEngine, "Failed to create audio format converter")
             return nil
         }
 
@@ -224,7 +224,7 @@ final class AudioEngine {
         converter.convert(to: outputBuffer, error: &error, withInputFrom: inputBlock)
 
         if let error = error {
-            print("[AudioEngine] Conversion error: \(error)")
+            VocaLogger.error(.audioEngine, "Conversion error: \(error)")
             return nil
         }
 

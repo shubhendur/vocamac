@@ -118,7 +118,7 @@ final class ModelManager {
         size: ModelSize,
         onProgress: @escaping (Double) -> Void
     ) async throws {
-        print("[ModelManager] Downloading model: \(whisperKitModelName(for: size))")
+        VocaLogger.info(.modelManager, "Downloading model: \(whisperKitModelName(for: size))")
 
         // Ensure download directory exists
         try FileManager.default.createDirectory(
@@ -165,7 +165,7 @@ final class ModelManager {
             // before we send the final progress update
             try? await Task.sleep(nanoseconds: 50_000_000)  // 50ms
             onProgress(1.0)
-            print("[ModelManager] Model '\(whisperKitModelName(for: size))' downloaded successfully")
+            VocaLogger.info(.modelManager, "Model '\(whisperKitModelName(for: size))' downloaded successfully")
         } catch {
             throw ModelManagerError.downloadFailed(reason: error.localizedDescription)
         }
@@ -175,7 +175,7 @@ final class ModelManager {
     func cancelDownload(for size: ModelSize) {
         // WhisperKit manages downloads internally via URLSession
         // For MVP, we rely on task cancellation at the caller level
-        print("[ModelManager] Download cancellation requested for \(size.displayName)")
+        VocaLogger.info(.modelManager, "Download cancellation requested for \(size.displayName)")
     }
 
     // MARK: - Model Deletion
@@ -187,7 +187,7 @@ final class ModelManager {
 
         if FileManager.default.fileExists(atPath: modelDir.path) {
             try FileManager.default.removeItem(at: modelDir)
-            print("[ModelManager] Deleted model: \(modelName)")
+            VocaLogger.info(.modelManager, "Deleted model: \(modelName)")
         }
     }
 
