@@ -75,6 +75,16 @@ final class WhisperService: @unchecked Sendable {
                 config.model = name
             }
 
+            // Store models in Application Support, not the default ~/Documents
+            // path, to avoid triggering a Documents folder permission prompt.
+            let appSupport = FileManager.default.urls(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask
+            ).first!
+            config.downloadBase = appSupport
+                .appendingPathComponent("VocaMac")
+                .appendingPathComponent("models")
+
             // Verbose logging for debugging
             config.verbose = true
 
