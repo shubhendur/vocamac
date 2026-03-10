@@ -31,6 +31,10 @@ Package.resolved
 # Built app bundle
 VocaMac.app/
 
+# DMG build artifacts
+*.dmg
+dmg-staging*/
+
 # Legacy stubs
 Sources/CWhisper/
 VocaMac.iconset/
