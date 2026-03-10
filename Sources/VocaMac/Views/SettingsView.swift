@@ -734,6 +734,15 @@ struct DebugTab: View {
                     appState.checkPermissions()
                 }
                 .controlSize(.small)
+
+                HStack(alignment: .top, spacing: 8) {
+                    Image(systemName: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.yellow)
+                        .font(.caption)
+                    Text("**Upgrading?** After updating VocaMac, you must remove the old entry (using \"−\") from Accessibility and Input Monitoring in System Settings → Privacy & Security, then re-add the new version. Permissions don't carry over because the app is not signed with a Developer ID.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             // Debug Logs
