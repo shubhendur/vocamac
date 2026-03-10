@@ -92,7 +92,14 @@ struct OnboardingView: View {
                     if currentStep != .welcome {
                         Button(action: goToPreviousStep) {
                             Text("Back")
+                                .font(.body)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.gray.opacity(0.2))
+                                .foregroundStyle(.primary)
+                                .cornerRadius(8)
                         }
+                        .buttonStyle(.plain)
                         .keyboardShortcut(.cancelAction)
                     }
 
@@ -101,12 +108,28 @@ struct OnboardingView: View {
                     if currentStep != .complete {
                         Button(action: goToNextStep) {
                             Text(currentStep == .quickTest ? "Finish" : "Continue")
+                                .font(.body)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 8)
+                                .background(Color.blue)
+                                .foregroundStyle(.white)
+                                .cornerRadius(8)
                         }
+                        .buttonStyle(.plain)
                         .keyboardShortcut(.defaultAction)
                     } else {
                         Button(action: completeOnboarding) {
                             Text("Start Using VocaMac")
+                                .font(.body)
+                                .fontWeight(.medium)
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 8)
+                                .background(Color.blue)
+                                .foregroundStyle(.white)
+                                .cornerRadius(8)
                         }
+                        .buttonStyle(.plain)
                         .keyboardShortcut(.defaultAction)
                     }
                 }
