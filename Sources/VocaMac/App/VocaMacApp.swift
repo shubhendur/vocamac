@@ -57,16 +57,23 @@ final class SettingsWindowManager: ObservableObject {
 }
 
 /// Manages the onboarding window
+@MainActor
 final class OnboardingWindowManager: ObservableObject {
     private var onboardingWindow: NSWindow?
     var onCompletion: (() -> Void)?
 
-    func open(appState: AppState) {
+    func open(appState: AppState, force: Bool = false) {
         // If window already exists, just bring it to front
         if let window = onboardingWindow, window.isVisible {
             window.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)
             return
+        }
+
+        // When manually re-triggered, reset completion flag so the
+        // monitor doesn't immediately close the window
+        if force {
+            appState.hasCompletedOnboarding = false
         }
 
         // Create the onboarding view
@@ -152,13 +159,13 @@ struct VocaMacApp: App {
             NSApp?.setActivationPolicy(.accessory)
         }
 
-        // Listen for "Show Setup Wizard" requests from Settings
+        // Listen for "Show Setup Wizard" requests from Settings / Menu Bar
         NotificationCenter.default.addObserver(
             forName: .showOnboarding,
             object: nil,
             queue: .main
         ) { [self] _ in
-            self.onboardingManager.open(appState: self.appState)
+            self.onboardingManager.open(appState: self.appState, force: true)
         }
     }
 
