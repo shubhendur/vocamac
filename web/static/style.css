@@ -463,7 +463,8 @@ a.feature-card:hover {
 a.feature-card::after {
     content: "Learn more →";
     display: block;
-    margin-top: 12px;
+    margin-top: auto;
+    padding-top: 12px;
     font-size: 13px;
     font-weight: 500;
     color: var(--accent);
