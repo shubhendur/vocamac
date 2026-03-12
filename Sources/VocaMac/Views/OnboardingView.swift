@@ -878,7 +878,9 @@ extension View {
     }
 }
 
+#if DEBUG
 #Preview {
     OnboardingView()
         .environmentObject(AppState())
 }
+#endif
