@@ -829,7 +829,7 @@ a.feature-card:hover::after {
     .container { padding: 0 32px; }
     .features__grid { grid-template-columns: repeat(2, 1fr); }
     .models__grid { grid-template-columns: repeat(3, 1fr); }
-    .hero__container { grid-template-columns: 1fr; text-align: center; gap: 0; }
+    .hero__container { grid-template-columns: 1fr; text-align: center; gap: 32px; }
     .hero__content { align-items: center; min-width: 0; width: 100%; }
     .hero__subtext { max-width: 100%; word-wrap: break-word; overflow-wrap: break-word; }
     .privacy__content { grid-template-columns: 1fr; }
@@ -856,6 +856,7 @@ a.feature-card:hover::after {
     .hero__cta-centered { flex-direction: column; align-items: stretch; gap: 12px; width: 100%; margin-top: 32px; padding: 0 20px; }
     .hero__cta-centered .button { width: 100%; justify-content: center; padding: 14px 24px; font-size: 15px; }
     .hero { padding: 100px 0 40px; }
+    .hero__container { gap: 0; }
     .hero__visual { display: flex; margin-top: 16px; transform: scale(0.7); transform-origin: top center; margin-bottom: -80px; }
     .comparison-table { font-size: 12px; }
     .comparison-row { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
