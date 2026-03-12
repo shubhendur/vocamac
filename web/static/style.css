@@ -198,7 +198,7 @@ h4 { font-size: 16px; font-weight: 600; }
     color: var(--text-primary);
     border-color: var(--border-hover);
 }
-.navbar__toggle { display: none; background: none; border: none; cursor: pointer; flex-direction: column; gap: 5px; }
+.navbar__toggle { display: none; background: none; border: none; cursor: pointer; flex-direction: column; gap: 5px; min-width: 44px; min-height: 44px; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
 .navbar__toggle span { width: 20px; height: 2px; background: var(--text-primary); transition: 0.3s; }
 
 /* Light mode code block adjustments */
@@ -839,7 +839,7 @@ a.feature-card:hover::after {
     section { padding: 64px 0; }
     .navbar__menu { display: none; position: absolute; top: 100%; left: 0; right: 0; background: var(--navbar-bg); backdrop-filter: blur(20px); flex-direction: column; padding: 20px; gap: 16px; border-bottom: 1px solid var(--border-color); }
     .navbar__menu--open { display: flex; }
-    .navbar__cta { padding: 8px; min-width: unset; }
+    .navbar__cta { padding: 10px 12px; min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
     .navbar__cta-text { display: none; }
     .navbar__cta svg { margin-right: 0 !important; }
     .navbar__toggle { display: flex; }
@@ -853,14 +853,19 @@ a.feature-card:hover::after {
     .comparison-table { font-size: 12px; }
     .comparison-row { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
     .comparison-row div { padding: 8px 10px; }
-    .footer__container { flex-direction: column; gap: 16px; text-align: center; }
+    .footer__container { flex-direction: column; gap: 20px; text-align: center; }
     .install__card { padding: 24px; grid-template-columns: 1fr; gap: 24px; }
     .install__tabs { border-radius: var(--radius-md); }
-    .install__tab { padding: 10px 16px; font-size: 13px; }
+    .install__tab { padding: 14px 20px; font-size: 14px; min-height: 44px; }
     .code-block__body { padding: 12px 14px; }
     .code-block__body code { font-size: 11px; white-space: pre-wrap; word-break: break-word; }
     .code-block__titlebar { padding: 8px 12px; }
     .code-block__title { display: none; }
+    .footer__links { gap: 16px; flex-wrap: wrap; justify-content: center; }
+    .footer__links a { padding: 8px 4px; min-height: 44px; display: inline-flex; align-items: center; font-size: 14px; }
+    .footer__right { font-size: 14px; }
+    .footer__right a { padding: 8px 4px; min-height: 44px; display: inline-flex; align-items: center; }
+    .code-block__copy { min-width: 44px; min-height: 44px; padding: 8px 12px; font-size: 14px; }
 }
 
 @media (max-width: 480px) {
