@@ -359,7 +359,7 @@ VocaMac is the macOS member of the Voca family:
 | Platform | Project | Status |
 |----------|---------|--------|
 |  Linux | [VocaLinux](https://github.com/jatinkrmalik/vocalinux) | ✅ Available |
-|  macOS | [VocaMac](https://github.com/jatinkrmalik/vocamac) | 🚧 Alpha |
+|  macOS | [VocaMac](https://github.com/jatinkrmalik/vocamac) | 🚀 Beta |
 | 🪟 Windows | [VocaWin](https://vocawin.com) | 📋 Planned |
 
 Each platform uses native technologies for the best possible integration, while sharing the same UX patterns and Whisper model family.
