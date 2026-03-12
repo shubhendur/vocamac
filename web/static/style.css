@@ -428,6 +428,7 @@ section { padding: 100px 0; }
 .features__grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
+    grid-auto-rows: 1fr;
     gap: 20px;
 }
 .feature-card {
@@ -452,7 +453,6 @@ section { padding: 100px 0; }
 }
 a.feature-card {
     cursor: pointer;
-    position: relative;
     text-decoration: none;
     color: inherit;
 }
@@ -463,19 +463,17 @@ a.feature-card:hover {
 }
 a.feature-card::after {
     content: "Learn more →";
-    position: absolute;
-    bottom: 20px;
-    right: 24px;
+    display: block;
+    margin-top: auto;
+    padding-top: 12px;
     font-size: 13px;
     font-weight: 500;
     color: var(--accent);
     opacity: 0;
-    transform: translateX(-8px);
-    transition: all 0.3s ease;
+    transition: opacity 0.3s ease;
 }
 a.feature-card:hover::after {
     opacity: 1;
-    transform: translateX(0);
 }
 .feature-card__icon { font-size: 28px; }
 .feature-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.6; }
@@ -1016,6 +1014,16 @@ a.feature-card:hover::after {
     color: var(--green);
     font-weight: 700;
 }
+.feature-content ol {
+    padding-left: 24px;
+    margin-bottom: 24px;
+}
+.feature-content ol li {
+    padding: 6px 0;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
 .feature-cta {
     text-align: center;
     padding: 48px 0;
@@ -1052,4 +1060,14 @@ a.feature-card:hover::after {
 .feature-content tbody td:first-child {
     font-weight: 600;
     color: var(--text-primary);
+}
+
+/* Feature page images */
+.feature-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    margin: 16px 0 24px;
 }
