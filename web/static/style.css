@@ -1014,6 +1014,16 @@ a.feature-card:hover::after {
     color: var(--green);
     font-weight: 700;
 }
+.feature-content ol {
+    padding-left: 24px;
+    margin-bottom: 24px;
+}
+.feature-content ol li {
+    padding: 6px 0;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
 .feature-cta {
     text-align: center;
     padding: 48px 0;
