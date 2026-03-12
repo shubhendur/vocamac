@@ -30,6 +30,19 @@ Speak. It types. 100% offline, open-source voice-to-text for macOS - powered by 
 
 ---
 
+## ✨ Features
+
+- **🔒 100% Local** - All audio processing happens on your machine. No internet required (except for one-time model downloads).
+- **⌨️ System-Wide Text Injection** - Transcribed text is typed wherever your cursor is: browsers, Slack, VS Code, spreadsheets, terminals - everywhere.
+- **🎯 Push-to-Talk** - Hold a hotkey (default: Right Option) to record. Release to transcribe.
+- **👆 Double-Tap Toggle** - Double-tap the hotkey to start/stop recording.
+- **🧠 Smart Model Selection** - Auto-detects your hardware (Apple Silicon/Intel, RAM) and recommends the best whisper model via WhisperKit.
+- **⚡ Native Apple Acceleration** - CoreML + Metal + Neural Engine acceleration on Apple Silicon. No manual setup.
+- **📊 Visual Feedback** - Menu bar icon changes color during recording and processing. Audio level indicator shows input.
+- **⚙️ Configurable** - Choose hotkeys, models, languages, silence detection thresholds, and more.
+
+---
+
 ## 📸 Screenshots
 
 <p align="center">
@@ -67,19 +80,6 @@ Speak. It types. 100% offline, open-source voice-to-text for macOS - powered by 
   <br>
   <em>Floating mic indicator near text cursor during recording</em>
 </p>
-
----
-
-## ✨ Features
-
-- **🔒 100% Local** - All audio processing happens on your machine. No internet required (except for one-time model downloads).
-- **⌨️ System-Wide Text Injection** - Transcribed text is typed wherever your cursor is: browsers, Slack, VS Code, spreadsheets, terminals - everywhere.
-- **🎯 Push-to-Talk** - Hold a hotkey (default: Right Option) to record. Release to transcribe.
-- **👆 Double-Tap Toggle** - Double-tap the hotkey to start/stop recording.
-- **🧠 Smart Model Selection** - Auto-detects your hardware (Apple Silicon/Intel, RAM) and recommends the best whisper model via WhisperKit.
-- **⚡ Native Apple Acceleration** - CoreML + Metal + Neural Engine acceleration on Apple Silicon. No manual setup.
-- **📊 Visual Feedback** - Menu bar icon changes color during recording and processing. Audio level indicator shows input.
-- **⚙️ Configurable** - Choose hotkeys, models, languages, silence detection thresholds, and more.
 
 ---
 
