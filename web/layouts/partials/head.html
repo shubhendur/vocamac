@@ -6,6 +6,27 @@
     <meta name="title" content="{{ if .IsHome }}VocaMac - 100% Local Voice-to-Text for macOS{{ else }}{{ .Title }} | VocaMac{{ end }}">
     <meta name="description" content="{{ with .Params.description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}">
     {{ with .Params.keywords }}<meta name="keywords" content="{{ . }}">{{ end }}
+    {{ if .IsPage }}{{ if not .IsHome }}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebPage",
+        "name": "{{ .Title }}",
+        "description": "{{ with .Params.description }}{{ . }}{{ else }}{{ .Site.Params.description }}{{ end }}",
+        "url": "{{ .Permalink }}",
+        "isPartOf": {
+            "@type": "WebSite",
+            "name": "VocaMac",
+            "url": "{{ .Site.BaseURL }}"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "{{ .Site.Params.author }}",
+            "url": "https://github.com/jatinkrmalik"
+        }
+    }
+    </script>
+    {{ end }}{{ end }}
     <meta name="author" content="{{ .Site.Params.author }}">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ .Permalink }}">
