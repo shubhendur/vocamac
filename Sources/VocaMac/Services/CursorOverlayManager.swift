@@ -124,6 +124,12 @@ final class CursorOverlayManager {
 
     /// Use the Accessibility API to get the bounding rect of the text caret
     /// in the currently focused application.
+    ///
+    /// The Accessibility API returns coordinates in the macOS global coordinate
+    /// system (top-left origin, with (0,0) at the top-left of the primary screen).
+    /// NSWindow/NSPanel uses the AppKit coordinate system (bottom-left origin).
+    /// We must convert between these systems using the *primary screen's height*
+    /// — not NSScreen.main — to handle multi-monitor setups properly.
     private func getCaretRect() -> CGRect? {
         // Get the focused application
         let systemWide = AXUIElementCreateSystemWide()
@@ -164,10 +170,20 @@ final class CursorOverlayManager {
             return nil
         }
 
-        // AX coordinates are top-left origin; convert to NSScreen bottom-left origin
-        if let screen = NSScreen.main {
-            rect.origin.y = screen.frame.height - rect.origin.y - rect.height
-        }
+        // Convert from AX (top-left origin) to AppKit (bottom-left origin).
+        //
+        // The AX global coordinate system places (0,0) at the top-left corner
+        // of the primary display, with Y increasing downward. AppKit places
+        // (0,0) at the bottom-left of the primary display with Y going up.
+        //
+        // To convert correctly on multi-monitor setups we must use the
+        // *primary* screen's height (NSScreen.screens.first) — not
+        // NSScreen.main (the screen with the current key window). The AX
+        // coordinate space is always anchored to the primary display, so
+        // using any other screen's dimensions produces wrong results when
+        // the caret is on a secondary monitor.
+        let primaryScreenHeight = NSScreen.screens.first?.frame.height ?? 0
+        rect.origin.y = primaryScreenHeight - rect.origin.y - rect.height
 
         return rect
     }
