@@ -811,6 +811,30 @@ struct CompleteStep: View {
             .background(Color.green.opacity(0.05))
             .cornerRadius(8)
 
+            // Launch at Login option
+            Toggle(isOn: Binding(
+                get: { appState.launchAtLogin },
+                set: { appState.setLaunchAtLogin($0) }
+            )) {
+                HStack(spacing: 10) {
+                    Image(systemName: "sunrise.fill")
+                        .foregroundStyle(.orange)
+                        .frame(width: 20)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Launch at Login")
+                            .font(.subheadline)
+                        Text("Start VocaMac automatically when you log in")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            .toggleStyle(.switch)
+            .controlSize(.small)
+            .padding()
+            .background(Color.blue.opacity(0.05))
+            .cornerRadius(8)
+
             Spacer()
 
             Text("You can adjust settings anytime from the VocaMac menu.")
