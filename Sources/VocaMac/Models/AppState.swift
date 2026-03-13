@@ -132,11 +132,29 @@ final class AppState: ObservableObject {
 
     // MARK: - Initialization
 
+    /// Whether `performStartup()` has already run. Guards against duplicate calls
+    /// if SwiftUI re-evaluates the body of the `App` struct.
+    private var hasStarted = false
+
     init() {
         VocaLogger.info(.appState, "Initializing...")
         syncLaunchAtLogin()
         setupServices()
-        // Trigger startup automatically
+        // NOTE: performStartup() is NOT called here. SwiftUI may instantiate
+        // AppState more than once (the discarded instance's deinit tears down
+        // the event tap that the surviving instance just created). Instead,
+        // startup is triggered from onAppear/task in VocaMacApp to ensure it
+        // only runs on the instance SwiftUI actually keeps.
+    }
+
+    /// Called once from the SwiftUI lifecycle to complete initialization.
+    /// Safe to call multiple times — only the first call takes effect.
+    func triggerStartupIfNeeded() {
+        guard !hasStarted else {
+            VocaLogger.debug(.appState, "triggerStartupIfNeeded called again — skipping (already started)")
+            return
+        }
+        hasStarted = true
         Task {
             await performStartup()
         }
@@ -213,8 +231,22 @@ final class AppState: ObservableObject {
             Task { @MainActor in
                 guard let self = self else { return }
                 if self.activationMode == .doubleTapToggle && self.isRecording {
+                    VocaLogger.info(.appState, "Silence detected — auto-stopping recording (double-tap mode)")
                     await self.stopRecordingAndTranscribe()
                 }
+            }
+        }
+
+        // Setup max recording duration callback.
+        // AudioEngine fires this when the recording reaches maxRecordingDuration.
+        // This is the primary duration limit — the HotKeyManager safety timer
+        // (maxRecordingDuration + 5s) acts as a backstop in case this callback
+        // fails or the key-up event is lost entirely.
+        audioEngine.onMaxDurationReached = { [weak self] in
+            Task { @MainActor in
+                guard let self = self, self.isRecording else { return }
+                VocaLogger.info(.appState, "Max recording duration (\(self.maxRecordingDuration)s) reached — auto-stopping")
+                await self.stopRecordingAndTranscribe()
             }
         }
 
@@ -274,7 +306,8 @@ final class AppState: ObservableObject {
                     self.hotKeyManager.startListening(
                         keyCode: self.hotKeyCode,
                         mode: self.activationMode,
-                        doubleTapThreshold: self.doubleTapThreshold
+                        doubleTapThreshold: self.doubleTapThreshold,
+                        safetyTimeout: Double(self.maxRecordingDuration) + 5.0
                     )
                     VocaLogger.info(.appState, "Hotkey listener started after permission grant")
                 }
@@ -392,7 +425,19 @@ final class AppState: ObservableObject {
     // MARK: - Recording Flow
 
     func startRecording() async {
-        guard appStatus == .idle else { return }
+        // If we're already recording, this is a recovery attempt — the user
+        // pressed the hotkey again because a previous key-up was missed.
+        // Stop the current recording and transcribe what we have.
+        if appStatus == .recording || isRecording {
+            VocaLogger.warning(.appState, "startRecording called while already recording — treating as stop (recovery)")
+            await stopRecordingAndTranscribe()
+            return
+        }
+
+        guard appStatus == .idle else {
+            VocaLogger.warning(.appState, "startRecording called in non-idle state: \(appStatus.rawValue) — ignoring")
+            return
+        }
         guard micPermission == .granted else {
             errorMessage = "Microphone permission is required. Please grant access in System Settings."
             appStatus = .error
@@ -424,7 +469,10 @@ final class AppState: ObservableObject {
     }
 
     func stopRecordingAndTranscribe() async {
-        guard isRecording else { return }
+        // Accept stop if we're recording OR if the audio engine thinks
+        // it's recording (covers stuck-state recovery scenarios where
+        // isRecording and appStatus may be out of sync).
+        guard isRecording || appStatus == .recording else { return }
 
         let audioData = audioEngine.stopRecording()
         isRecording = false
@@ -496,52 +544,84 @@ final class AppState: ObservableObject {
             modelName = nil  // Let WhisperKit auto-select
         }
 
-        // Mark the model as loading
-        if let size = size, let idx = availableModels.firstIndex(where: { $0.size == size }) {
+        // Resolve which ModelSize we're loading. When size is nil (auto-select),
+        // we don't know yet — we'll detect it after loading completes.
+        let targetSize = size
+
+        // Mark the model as loading in the UI
+        if let targetSize = targetSize, let idx = availableModels.firstIndex(where: { $0.size == targetSize }) {
             availableModels[idx].isLoading = true
             availableModels[idx].loadingStatus = "Preparing…"
         }
 
         do {
             // If model is downloaded locally, use the local folder
-            let folder = size.flatMap { modelManager.modelFolder(for: $0) }
+            let folder = targetSize.flatMap { modelManager.modelFolder(for: $0) }
 
             // Update status: unpacking
-            if let size = size, let idx = availableModels.firstIndex(where: { $0.size == size }) {
+            if let targetSize = targetSize, let idx = availableModels.firstIndex(where: { $0.size == targetSize }) {
                 availableModels[idx].loadingStatus = "Unpacking model…"
             }
 
             // Load model with status callback
             try await whisperService.loadModel(name: modelName, folder: folder) { [weak self] phase in
                 Task { @MainActor in
-                    guard let self = self, let size = size,
-                          let idx = self.availableModels.firstIndex(where: { $0.size == size }) else { return }
-                    self.availableModels[idx].loadingStatus = phase
+                    guard let self = self else { return }
+                    if let targetSize = targetSize,
+                       let idx = self.availableModels.firstIndex(where: { $0.size == targetSize }) {
+                        self.availableModels[idx].loadingStatus = phase
+                    }
                 }
             }
 
-            if let size = size {
-                selectedModelSize = size.rawValue
+            // Determine which ModelSize was actually loaded.
+            // When auto-selecting, WhisperKit chooses the model and we need
+            // to detect which one it picked by inspecting the loaded model name.
+            let resolvedSize: ModelSize
+            if let targetSize = targetSize {
+                resolvedSize = targetSize
+            } else {
+                let loadedName = (whisperService.loadedModelName ?? "").lowercased()
+                // Check from largest to smallest to avoid "base" matching inside "large-v3"
+                if loadedName.contains("large") {
+                    resolvedSize = .largeV3
+                } else if loadedName.contains("medium") {
+                    resolvedSize = .medium
+                } else if loadedName.contains("small") {
+                    resolvedSize = .small
+                } else if loadedName.contains("base") {
+                    resolvedSize = .base
+                } else {
+                    resolvedSize = .tiny
+                }
+                VocaLogger.info(.appState, "Auto-selected model resolved to: \(resolvedSize.displayName) (from '\(whisperService.loadedModelName ?? "unknown")')")
             }
 
-            // Update model states
-            let loadedName = whisperService.loadedModelName ?? ""
+            // Persist the resolved model as the user's preference
+            selectedModelSize = resolvedSize.rawValue
+
+            // Update model states — clear all, then mark the loaded one as active
             for i in availableModels.indices {
-                let matches = size != nil
-                    ? availableModels[i].size == size
-                    : loadedName.contains(availableModels[i].size.rawValue)
+                let matches = availableModels[i].size == resolvedSize
                 availableModels[i].isActive = matches
                 availableModels[i].isLoading = false
+                availableModels[i].loadingStatus = "Loading…"
                 if matches {
+                    // Refresh download status in case the auto-select downloaded it
+                    availableModels[i].isDownloaded = modelManager.isModelDownloaded(resolvedSize)
                     currentModel = availableModels[i]
                 }
             }
+
+            VocaLogger.info(.appState, "Model ready: \(resolvedSize.displayName)")
         } catch {
-            // Clear loading state on error
-            if let size = size, let idx = availableModels.firstIndex(where: { $0.size == size }) {
-                availableModels[idx].isLoading = false
+            // Clear loading state on error for all models (covers auto-select case)
+            for i in availableModels.indices {
+                availableModels[i].isLoading = false
+                availableModels[i].loadingStatus = "Loading…"
             }
             errorMessage = "Failed to load model: \(error.localizedDescription)"
+            VocaLogger.error(.appState, "Failed to load model: \(error.localizedDescription)")
         }
     }
 
@@ -611,15 +691,20 @@ final class AppState: ObservableObject {
         // Start polling if any permission is still missing
         startPermissionPolling()
 
-        // 3. Load the user's preferred model (or auto-select on first launch)
-        if let preferredSize = ModelSize(rawValue: selectedModelSize),
-           modelManager.isModelDownloaded(preferredSize) {
-            VocaLogger.info(.appState, "Loading preferred model: \(preferredSize.displayName)...")
-            await loadModel(preferredSize)
-        } else {
-            VocaLogger.info(.appState, "Loading WhisperKit model (auto-select)...")
-            await loadModel()
+        // 3. Load the user's preferred model.
+        // On first launch the preferred model (tiny by default) won't be
+        // downloaded yet. We download it explicitly so the UI can show real
+        // progress, rather than delegating to WhisperKit's opaque auto-select
+        // which provides no progress callbacks and may pick a different model.
+        let preferredSize = ModelSize(rawValue: selectedModelSize) ?? .tiny
+
+        if !modelManager.isModelDownloaded(preferredSize) {
+            VocaLogger.info(.appState, "Preferred model \(preferredSize.displayName) not downloaded — downloading now...")
+            await downloadModel(preferredSize)
         }
+
+        VocaLogger.info(.appState, "Loading model: \(preferredSize.displayName)...")
+        await loadModel(preferredSize)
         NSLog("[AppState] Model loaded: %@", whisperService.loadedModelName ?? "none")
 
         // 4. Always attempt to start hotkey listener
@@ -629,7 +714,8 @@ final class AppState: ObservableObject {
         hotKeyManager.startListening(
             keyCode: hotKeyCode,
             mode: activationMode,
-            doubleTapThreshold: doubleTapThreshold
+            doubleTapThreshold: doubleTapThreshold,
+            safetyTimeout: Double(maxRecordingDuration) + 5.0
         )
         if hotKeyManager.isListening {
             VocaLogger.info(.appState, "Hotkey listener active (keyCode=\(hotKeyCode), mode=\(activationMode.rawValue))")

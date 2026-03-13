@@ -145,6 +145,14 @@ struct VocaMacApp: App {
                 .environmentObject(appState)
         } label: {
             MenuBarIcon(appStatus: appState.appStatus, audioLevel: appState.audioLevel)
+                .onAppear {
+                    // Trigger startup from the SwiftUI lifecycle so it only runs
+                    // on the AppState instance that SwiftUI actually retains.
+                    // Previously, startup ran in AppState.init() which caused
+                    // double initialization (and double event taps) because
+                    // SwiftUI may instantiate the App struct more than once.
+                    appState.triggerStartupIfNeeded()
+                }
         }
         .menuBarExtraStyle(.window)
     }

@@ -41,6 +41,18 @@ final class HotKeyManager {
     /// Whether we are currently in a "recording" toggle state (for double-tap mode)
     private var isToggled = false
 
+    /// Safety timer that auto-fires key-up if a real key-up event is missed.
+    /// macOS can drop flagsChanged events when multiple modifiers interact,
+    /// leaving push-to-talk stuck in the "recording" state.
+    private var keyHeldSafetyTimer: DispatchWorkItem?
+
+    /// Maximum duration (seconds) before the safety timer forces a key-up.
+    /// Set via `startListening(safetyTimeout:)` — should match (or slightly
+    /// exceed) the app's max recording duration so the safety timer acts as
+    /// a last-resort backstop *after* AudioEngine's own max-duration callback
+    /// has had a chance to fire.
+    private var safetyTimeoutSeconds: Double = 65.0
+
     // MARK: - Callbacks
 
     /// Called when recording should start
@@ -66,10 +78,15 @@ final class HotKeyManager {
     ///   - keyCode: The virtual key code to listen for (default: 61 = Right Option)
     ///   - mode: The activation mode (push-to-talk or double-tap toggle)
     ///   - doubleTapThreshold: Time window for double-tap detection (seconds)
+    ///   - safetyTimeout: Maximum seconds before the safety timer forces a key-up
+    ///     in push-to-talk mode. Should be slightly longer than the app's max
+    ///     recording duration so AudioEngine's own limit fires first. The safety
+    ///     timer is a last-resort backstop for when a key-up event is lost entirely.
     func startListening(
         keyCode: Int = 61,
         mode: ActivationMode = .pushToTalk,
-        doubleTapThreshold: Double = 0.4
+        doubleTapThreshold: Double = 0.4,
+        safetyTimeout: Double = 65.0
     ) {
         guard !isListening else {
             VocaLogger.debug(.hotKeyManager, "Already listening")
@@ -79,6 +96,7 @@ final class HotKeyManager {
         self.targetKeyCode = keyCode
         self.mode = mode
         self.doubleTapThreshold = doubleTapThreshold
+        self.safetyTimeoutSeconds = safetyTimeout
         self.lastKeyDownTime = 0
         self.isKeyHeld = false
         self.isToggled = false
@@ -134,19 +152,30 @@ final class HotKeyManager {
         isListening = false
         isKeyHeld = false
         isToggled = false
+        previousFlags = []
+        cancelSafetyTimer()
 
         VocaLogger.info(.hotKeyManager, "Stopped listening")
     }
 
     /// Update the configuration while listening
+    /// - Parameters:
+    ///   - keyCode: New key code to listen for
+    ///   - mode: New activation mode
+    ///   - doubleTapThreshold: New double-tap detection window (seconds)
+    ///   - safetyTimeout: New safety timer duration (seconds). Should be
+    ///     `maxRecordingDuration + 5` to act as a backstop after AudioEngine's
+    ///     own max-duration callback.
     func updateConfiguration(
         keyCode: Int? = nil,
         mode: ActivationMode? = nil,
-        doubleTapThreshold: Double? = nil
+        doubleTapThreshold: Double? = nil,
+        safetyTimeout: Double? = nil
     ) {
         if let keyCode = keyCode { self.targetKeyCode = keyCode }
         if let mode = mode { self.mode = mode }
         if let threshold = doubleTapThreshold { self.doubleTapThreshold = threshold }
+        if let timeout = safetyTimeout { self.safetyTimeoutSeconds = timeout }
     }
 
     // MARK: - Event Tap Callback
@@ -189,29 +218,75 @@ final class HotKeyManager {
     }
 
     /// Handle modifier key events (Option, Command, Control, Shift, Fn)
-    /// Modifier keys generate flagsChanged events, not keyDown/keyUp
+    /// Modifier keys generate flagsChanged events, not keyDown/keyUp.
+    ///
+    /// **Key insight:** Modifier flags like `.maskAlternate` are shared between
+    /// left and right variants (e.g., Left Option and Right Option both set
+    /// `.maskAlternate`). A `flagsChanged` event fires whenever *any* modifier
+    /// changes, so we can't simply check the flag — pressing Left Option while
+    /// Right Option is already held would still show `.maskAlternate` as set,
+    /// and releasing Right Option while Left Option is held would *not* clear
+    /// the flag, causing the key-up to be missed.
+    ///
+    /// **Fix:** We track the raw flags value and detect transitions. When the
+    /// target key code fires a `flagsChanged` event, we compare the current
+    /// flags with the previous snapshot to determine if the *specific* key
+    /// was pressed or released.
+    private var previousFlags: CGEventFlags = []
+
     private func handleModifierKeyEvent(keyCode: Int, event: CGEvent) {
         guard keyCode == targetKeyCode else { return }
 
-        // Determine if the key is pressed or released by checking modifier flags
         let flags = event.flags
 
-        // Map key codes to their corresponding flag masks
-        let isPressed: Bool
+        // The flag mask that corresponds to this key's modifier group
+        let relevantMask: CGEventFlags
         switch keyCode {
         case 61, 58:  // Right Option (61) or Left Option (58)
-            isPressed = flags.contains(.maskAlternate)
+            relevantMask = .maskAlternate
         case 54, 55:  // Right Command (54) or Left Command (55)
-            isPressed = flags.contains(.maskCommand)
+            relevantMask = .maskCommand
         case 60, 56:  // Right Shift (60) or Left Shift (56)
-            isPressed = flags.contains(.maskShift)
+            relevantMask = .maskShift
         case 62, 59:  // Right Control (62) or Left Control (59)
-            isPressed = flags.contains(.maskControl)
+            relevantMask = .maskControl
         case 63:      // Fn key
-            isPressed = flags.contains(.maskSecondaryFn)
+            relevantMask = .maskSecondaryFn
         default:
             return
         }
+
+        // A flagsChanged event for this keyCode means the key was either
+        // pressed or released. We determine which by comparing the flag
+        // state with our expectation:
+        //
+        // • If the modifier flag is set AND we weren't already tracking
+        //   this key as held → key was pressed.
+        // • If the modifier flag is cleared → key was definitely released.
+        // • If the modifier flag is still set BUT macOS sent a flagsChanged
+        //   event specifically for our keyCode → the *specific* physical key
+        //   changed state. Since a flagsChanged for keyCode X only fires when
+        //   key X changes, if we were already holding it, this means it was
+        //   released (the flag may still be set because the *other* key in
+        //   the pair, e.g. Left Option, is still down).
+        let flagIsSet = flags.contains(relevantMask)
+
+        let isPressed: Bool
+        if !flagIsSet {
+            // Flag is clear — the key is definitely released
+            isPressed = false
+        } else if !isKeyHeld {
+            // Flag is set and we weren't tracking this key — it was pressed
+            isPressed = true
+        } else {
+            // Flag is still set but we're already tracking the key as held,
+            // and macOS sent a flagsChanged event for this exact keyCode.
+            // This means the physical key was released (the flag persists
+            // because another key in the same modifier group is still held).
+            isPressed = false
+        }
+
+        previousFlags = flags
 
         if isPressed {
             handleKeyDown()
@@ -238,12 +313,24 @@ final class HotKeyManager {
 
         switch mode {
         case .pushToTalk:
-            // Push-to-talk: start recording on key down (if not already held)
             if !isKeyHeld {
+                // Normal case: start recording on key down
                 isKeyHeld = true
                 VocaLogger.debug(.hotKeyManager, "Push-to-talk: START recording")
+                startSafetyTimer()
                 DispatchQueue.main.async { [weak self] in
                     self?.onRecordingStart?()
+                }
+            } else {
+                // Recovery: key-down while already held means the previous
+                // key-up was missed (macOS dropped the flagsChanged event).
+                // Treat this as a stop → the user is pressing the key again
+                // because recording is stuck.
+                VocaLogger.warning(.hotKeyManager, "Push-to-talk: key DOWN while already held — forcing STOP (recovery)")
+                isKeyHeld = false
+                cancelSafetyTimer()
+                DispatchQueue.main.async { [weak self] in
+                    self?.onRecordingStop?()
                 }
             }
 
@@ -279,6 +366,7 @@ final class HotKeyManager {
             // Push-to-talk: stop recording on key release
             if isKeyHeld {
                 isKeyHeld = false
+                cancelSafetyTimer()
                 VocaLogger.debug(.hotKeyManager, "Push-to-talk: STOP recording")
                 DispatchQueue.main.async { [weak self] in
                     self?.onRecordingStop?()
@@ -289,6 +377,37 @@ final class HotKeyManager {
             // No action on key up for toggle mode
             break
         }
+    }
+
+    // MARK: - Safety Timer
+
+    /// Start a safety timer that forces a key-up if the real event is never received.
+    /// This prevents the app from getting stuck in a "recording" state indefinitely.
+    ///
+    /// The timeout is set via `startListening(safetyTimeout:)` and should be
+    /// slightly longer than `maxRecordingDuration` so that AudioEngine's own
+    /// max-duration callback fires first under normal conditions. The safety
+    /// timer only kicks in when a key-up event is completely lost.
+    private func startSafetyTimer() {
+        cancelSafetyTimer()
+
+        let timeout = safetyTimeoutSeconds
+        let work = DispatchWorkItem { [weak self] in
+            guard let self = self, self.isKeyHeld else { return }
+            VocaLogger.warning(.hotKeyManager, "Safety timer fired — forcing key-up (key held for >\(timeout)s)")
+            self.isKeyHeld = false
+            DispatchQueue.main.async { [weak self] in
+                self?.onRecordingStop?()
+            }
+        }
+        keyHeldSafetyTimer = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + timeout, execute: work)
+    }
+
+    /// Cancel the safety timer (called on normal key-up)
+    private func cancelSafetyTimer() {
+        keyHeldSafetyTimer?.cancel()
+        keyHeldSafetyTimer = nil
     }
 
     // MARK: - Deinit
