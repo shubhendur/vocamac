@@ -691,15 +691,20 @@ final class AppState: ObservableObject {
         // Start polling if any permission is still missing
         startPermissionPolling()
 
-        // 3. Load the user's preferred model (or auto-select on first launch)
-        if let preferredSize = ModelSize(rawValue: selectedModelSize),
-           modelManager.isModelDownloaded(preferredSize) {
-            VocaLogger.info(.appState, "Loading preferred model: \(preferredSize.displayName)...")
-            await loadModel(preferredSize)
-        } else {
-            VocaLogger.info(.appState, "Loading WhisperKit model (auto-select)...")
-            await loadModel()
+        // 3. Load the user's preferred model.
+        // On first launch the preferred model (tiny by default) won't be
+        // downloaded yet. We download it explicitly so the UI can show real
+        // progress, rather than delegating to WhisperKit's opaque auto-select
+        // which provides no progress callbacks and may pick a different model.
+        let preferredSize = ModelSize(rawValue: selectedModelSize) ?? .tiny
+
+        if !modelManager.isModelDownloaded(preferredSize) {
+            VocaLogger.info(.appState, "Preferred model \(preferredSize.displayName) not downloaded — downloading now...")
+            await downloadModel(preferredSize)
         }
+
+        VocaLogger.info(.appState, "Loading model: \(preferredSize.displayName)...")
+        await loadModel(preferredSize)
         NSLog("[AppState] Model loaded: %@", whisperService.loadedModelName ?? "none")
 
         // 4. Always attempt to start hotkey listener
