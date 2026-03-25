@@ -314,6 +314,28 @@ final class TextInjectorTests: XCTestCase {
         injector.inject(text: "", preserveClipboard: true)
         injector.inject(text: "", preserveClipboard: false)
     }
+
+    func testInjectionModeWithAccessibilityTrusted() {
+        XCTAssertEqual(
+            TextInjector.injectionMode(preserveClipboard: true, isAccessibilityTrusted: true),
+            .clipboardPreserve
+        )
+        XCTAssertEqual(
+            TextInjector.injectionMode(preserveClipboard: false, isAccessibilityTrusted: true),
+            .typing
+        )
+    }
+
+    func testInjectionModeWithoutAccessibility() {
+        XCTAssertEqual(
+            TextInjector.injectionMode(preserveClipboard: true, isAccessibilityTrusted: false),
+            .clipboardFallback
+        )
+        XCTAssertEqual(
+            TextInjector.injectionMode(preserveClipboard: false, isAccessibilityTrusted: false),
+            .typing
+        )
+    }
 }
 
 // MARK: - SoundManager Tests
