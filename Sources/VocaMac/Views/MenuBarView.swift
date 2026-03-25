@@ -18,13 +18,23 @@ final class ProcessMonitor: ObservableObject {
     private var timer: Timer?
 
     init() {
+        // Start on demand to avoid background polling when menu is closed.
+    }
+
+    deinit { stop() }
+
+    func start() {
+        guard timer == nil else { return }
         refresh()
         timer = Timer.scheduledTimer(withTimeInterval: 5, repeats: true) { [weak self] _ in
             self?.refresh()
         }
     }
 
-    deinit { timer?.invalidate() }
+    func stop() {
+        timer?.invalidate()
+        timer = nil
+    }
 
     func refresh() {
         // --- Memory via mach_task_basic_info ---
@@ -109,6 +119,8 @@ struct MenuBarView: View {
         }
         .padding(20)
         .frame(width: 380)
+        .onAppear { processMonitor.start() }
+        .onDisappear { processMonitor.stop() }
     }
 
     // MARK: - Header
