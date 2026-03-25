@@ -6,6 +6,7 @@
 
 import Foundation
 import AVFoundation
+import Accelerate
 
 final class AudioEngine {
 
@@ -15,6 +16,8 @@ final class AudioEngine {
     private var audioBuffer: [Float] = []
     private var isCurrentlyRecording = false
     private let bufferQueue = DispatchQueue(label: "com.vocamac.audio-buffer", qos: .userInteractive)
+    private var audioConverter: AVAudioConverter?
+    private var converterKey: ConverterKey?
 
     // Silence detection
     private var lastSoundTime: Date = Date()
@@ -24,8 +27,10 @@ final class AudioEngine {
     private var recordingStartTime: Date = Date()
 
     // Audio level throttling
-    private var lastLevelReportTime: Date = Date()
-    private let levelReportInterval: TimeInterval = 1.0 / 15.0  // ~15 Hz
+    private var lastLevelReportTime: TimeInterval = 0
+    private var lastReportedLevel: Float = 0.0
+    private let levelReportInterval: TimeInterval = 1.0 / 8.0  // ~8 Hz
+    private let levelReportDelta: Float = 0.03
 
     /// Target audio format for whisper.cpp
     static let whisperFormat = AVAudioFormat(
@@ -34,6 +39,18 @@ final class AudioEngine {
         channels: 1,
         interleaved: false
     )!
+
+    private struct ConverterKey: Equatable {
+        let sampleRate: Double
+        let channelCount: AVAudioChannelCount
+        let commonFormat: AVAudioCommonFormat
+
+        init(_ format: AVAudioFormat) {
+            self.sampleRate = format.sampleRate
+            self.channelCount = format.channelCount
+            self.commonFormat = format.commonFormat
+        }
+    }
 
     // MARK: - Callbacks
 
@@ -93,6 +110,8 @@ final class AudioEngine {
         bufferQueue.sync {
             audioBuffer.removeAll(keepingCapacity: true)
         }
+        lastLevelReportTime = 0
+        lastReportedLevel = 0.0
         lastSoundTime = Date()
         recordingStartTime = Date()
         silenceCallbackFired = false
@@ -125,9 +144,10 @@ final class AudioEngine {
         engine.stop()
 
         let samples: [Float] = bufferQueue.sync {
-            let copy = audioBuffer
-            audioBuffer.removeAll(keepingCapacity: true)
-            return copy
+            let captured = audioBuffer
+            audioBuffer = []
+            audioBuffer.reserveCapacity(captured.count)
+            return captured
         }
 
         return samples
@@ -154,10 +174,18 @@ final class AudioEngine {
         let energy = calculateRMSEnergy(convertedBuffer)
 
         // Report audio level (throttled)
-        let now = Date()
-        if now.timeIntervalSince(lastLevelReportTime) >= levelReportInterval {
+        let now = CFAbsoluteTimeGetCurrent()
+        let normalizedLevel = min(energy / 0.3, 1.0)  // Normalize to 0-1 range
+        if Self.shouldReportAudioLevel(
+            lastReportTime: lastLevelReportTime,
+            now: now,
+            lastReportedLevel: lastReportedLevel,
+            currentLevel: normalizedLevel,
+            minInterval: levelReportInterval,
+            minDelta: levelReportDelta
+        ) {
             lastLevelReportTime = now
-            let normalizedLevel = min(energy / 0.3, 1.0)  // Normalize to 0-1 range
+            lastReportedLevel = normalizedLevel
             onAudioLevel?(normalizedLevel)
         }
 
@@ -168,14 +196,13 @@ final class AudioEngine {
             let frameCount = Int(convertedBuffer.frameLength)
             bufferQueue.sync {
                 audioBuffer.reserveCapacity(audioBuffer.count + frameCount)
-                for i in 0..<frameCount {
-                    audioBuffer.append(channelData[0][i])
-                }
+                let samples = UnsafeBufferPointer(start: channelData[0], count: frameCount)
+                audioBuffer.append(contentsOf: samples)
             }
         }
 
         // Check max duration (fire callback only once)
-        let elapsed = now.timeIntervalSince(recordingStartTime)
+        let elapsed = Date().timeIntervalSince(recordingStartTime)
         if elapsed >= maxDuration && !maxDurationCallbackFired {
             maxDurationCallbackFired = true
             DispatchQueue.main.async { [weak self] in
@@ -186,9 +213,9 @@ final class AudioEngine {
 
         // Silence detection
         if energy > silenceThreshold {
-            lastSoundTime = now
+            lastSoundTime = Date()
             silenceCallbackFired = false  // Reset so silence can be detected again after speech resumes
-        } else if now.timeIntervalSince(lastSoundTime) >= silenceDuration && !silenceCallbackFired {
+        } else if Date().timeIntervalSince(lastSoundTime) >= silenceDuration && !silenceCallbackFired {
             silenceCallbackFired = true
             DispatchQueue.main.async { [weak self] in
                 self?.onSilenceDetected?()
@@ -211,7 +238,13 @@ final class AudioEngine {
         }
 
         // Create a converter
-        guard let converter = AVAudioConverter(from: inputFormat, to: whisperFormat) else {
+        let key = ConverterKey(inputFormat)
+        if converterKey != key || audioConverter == nil {
+            audioConverter = AVAudioConverter(from: inputFormat, to: whisperFormat)
+            converterKey = key
+        }
+
+        guard let converter = audioConverter else {
             VocaLogger.error(.audioEngine, "Failed to create audio format converter")
             return nil
         }
@@ -250,13 +283,22 @@ final class AudioEngine {
         let frameCount = Int(buffer.frameLength)
         guard frameCount > 0 else { return 0.0 }
 
-        var sumSquares: Float = 0.0
-        for i in 0..<frameCount {
-            let sample = channelData[0][i]
-            sumSquares += sample * sample
-        }
+        var rms: Float = 0.0
+        vDSP_rmsqv(channelData[0], 1, &rms, vDSP_Length(frameCount))
+        return rms
+    }
 
-        return sqrt(sumSquares / Float(frameCount))
+    static func shouldReportAudioLevel(
+        lastReportTime: TimeInterval,
+        now: TimeInterval,
+        lastReportedLevel: Float,
+        currentLevel: Float,
+        minInterval: TimeInterval,
+        minDelta: Float
+    ) -> Bool {
+        let timeDelta = now - lastReportTime
+        let levelDelta = abs(currentLevel - lastReportedLevel)
+        return timeDelta >= minInterval || levelDelta >= minDelta
     }
 
     // MARK: - Audio Device Enumeration
