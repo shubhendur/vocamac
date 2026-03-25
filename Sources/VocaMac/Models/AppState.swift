@@ -509,9 +509,10 @@ final class AppState: ObservableObject {
             // by WhisperService to remove hallucination tokens like [BLANK_AUDIO])
             let trimmedText = result.text.trimmingCharacters(in: .whitespacesAndNewlines)
             if !trimmedText.isEmpty {
+                VocaLogger.debug(.appState, "Injecting text with preserveClipboard=\(self.preserveClipboard)")
                 textInjector.inject(
                     text: trimmedText,
-                    preserveClipboard: preserveClipboard
+                    preserveClipboard: self.preserveClipboard
                 )
             } else {
                 VocaLogger.info(.appState, "Transcription produced no usable text (silence or blank audio)")
