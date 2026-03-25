@@ -338,6 +338,56 @@ final class TextInjectorTests: XCTestCase {
     }
 }
 
+// MARK: - AudioEngine Throttling Tests
+
+final class AudioEngineThrottleTests: XCTestCase {
+
+    func testShouldReportAudioLevelByTime() {
+        let shouldReport = AudioEngine.shouldReportAudioLevel(
+            lastReportTime: 0.0,
+            now: 1.0,
+            lastReportedLevel: 0.1,
+            currentLevel: 0.11,
+            minInterval: 0.5,
+            minDelta: 0.03
+        )
+        XCTAssertTrue(shouldReport)
+    }
+
+    func testShouldReportAudioLevelByDelta() {
+        let shouldReport = AudioEngine.shouldReportAudioLevel(
+            lastReportTime: 0.0,
+            now: 0.1,
+            lastReportedLevel: 0.1,
+            currentLevel: 0.2,
+            minInterval: 1.0,
+            minDelta: 0.03
+        )
+        XCTAssertTrue(shouldReport)
+    }
+
+    func testShouldNotReportAudioLevelWhenBelowThresholds() {
+        let shouldReport = AudioEngine.shouldReportAudioLevel(
+            lastReportTime: 0.0,
+            now: 0.1,
+            lastReportedLevel: 0.1,
+            currentLevel: 0.11,
+            minInterval: 1.0,
+            minDelta: 0.03
+        )
+        XCTAssertFalse(shouldReport)
+    }
+}
+
+// MARK: - Cursor Overlay Tests
+
+final class CursorOverlayTests: XCTestCase {
+
+    func testDefaultRepositionInterval() {
+        XCTAssertEqual(CursorOverlayManager.defaultRepositionInterval, 1.0)
+    }
+}
+
 // MARK: - SoundManager Tests
 
 final class SoundManagerTests: XCTestCase {
