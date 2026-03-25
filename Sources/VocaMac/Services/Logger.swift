@@ -139,7 +139,7 @@ final class VocaLogger {
         guard shouldLog(level: level) else { return }
 
         // Format the log message
-        let timestamp = ISO8601DateFormatter().string(from: Date())
+        let timestamp = Date().ISO8601Format()
         let formattedMessage = "[\(timestamp)] [\(level.rawValue)] [\(category.rawValue)] \(message)"
 
         // Write to os.Logger
