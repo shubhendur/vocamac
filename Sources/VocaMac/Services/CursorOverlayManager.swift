@@ -26,6 +26,7 @@ final class CursorOverlayManager {
 
     /// Timer to periodically reposition the overlay to follow the cursor
     private var repositionTimer: Timer?
+    static let defaultRepositionInterval: TimeInterval = 1.0
 
     // MARK: - Public API
 
@@ -65,7 +66,7 @@ final class CursorOverlayManager {
         hostingView = hosting
 
         // Reposition periodically in case the user scrolls or the cursor moves
-        repositionTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+        repositionTimer = Timer.scheduledTimer(withTimeInterval: Self.defaultRepositionInterval, repeats: true) { [weak self] _ in
             Task { @MainActor in
                 guard let self = self, let panel = self.overlayPanel else { return }
                 self.positionNearCaret(panel)
